@@ -68,7 +68,7 @@
         margin: 0;
         overflow: hidden;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
         height: 100vh;
         background: rgba(0, 0, 0, 0);
@@ -76,6 +76,7 @@
     .menu-wrapper {
         display: flex;
         align-items: center;
+        margin-left: 20px; /* Added to move the menu slightly to the right */
     }
     .scrollbar-container {
         width: 10px;
@@ -115,7 +116,7 @@
         height: auto;
         image-rendering: auto;
         object-fit: cover;
-        max-height: 10vw; /* Increased from 6.5vw to make header taller */
+        max-height: 6.5vw;
     }
     .menu-header {
         background: rgba(0, 0, 0, 0.8);
