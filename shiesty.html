@@ -39,7 +39,9 @@
         const scrollbarThumb = document.getElementById('scrollbar-thumb');
         const menuCounter = document.getElementById('menu-counter');
         const totalItems = menuItems.length;
-        const maxScrollHeight = 250;
+        const scrollbarHeight = 300; // Height of scrollbar-container
+        const thumbHeight = 40; // Height of scrollbar-thumb
+        const maxScrollHeight = scrollbarHeight - thumbHeight; // Adjusted for thumb height
 
         function updateMenuSelection(direction) {
             menuItems[selectedIndex].classList.remove('selected');
@@ -47,12 +49,14 @@
             menuItems[selectedIndex].classList.add('selected');
             
             const scrollStep = maxScrollHeight / (totalItems - 1);
-            scrollbarThumb.style.top = `${selectedIndex * scrollStep}px`;
+            const thumbPosition = selectedIndex * scrollStep;
+            scrollbarThumb.style.top = `${Math.min(Math.max(thumbPosition, 0), maxScrollHeight)}px`;
             menuCounter.textContent = `${selectedIndex + 1}/${totalItems}`;
         }
 
         // Key events using DUI
         window.addEventListener("message", function (event) {
+            console.log('DUI Message Received:', event.data); // Debug log for DUI messages
             if (event.data.type === "navigate") {
                 if (event.data.direction === "up") {
                     updateMenuSelection(-1);
@@ -64,16 +68,21 @@
 
         // Keyboard events for arrow keys
         window.addEventListener('keydown', function(event) {
+            console.log('Key Pressed:', event.key); // Debug log for key presses
             if (event.key === 'ArrowUp') {
+                event.preventDefault(); // Prevent default browser scrolling
                 updateMenuSelection(-1);
             } else if (event.key === 'ArrowDown') {
+                event.preventDefault(); // Prevent default browser scrolling
                 updateMenuSelection(1);
             }
         });
 
-        // Automatically focus the window on load to capture key events
+        // Ensure focus for keyboard events in CEF
         window.onload = function() {
             window.focus();
+            document.body.tabIndex = 0; // Make body focusable
+            document.body.focus(); // Force focus on body
         };
     </script>
 
@@ -110,8 +119,6 @@
         border-radius: 20px;
         position: absolute;
         top: 0; 
-        transform: translateY(-50%);
-        transition: top 0.2s ease-in-out;
         margin: 4px 0;
     }
 
