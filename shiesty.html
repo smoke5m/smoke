@@ -27,32 +27,117 @@
                     <div class="menu-item"><i class="ph ph-target"></i> <span>Triggers</span> <i class="ph ph-caret-right"></i></div>
                     <div class="menu-item"><i class="ph ph-gear"></i> <span>Settings</span> <i class="ph ph-caret-right"></i></div>
                 </div>
+                <div class="submenu-container" id="self-submenu" style="display: none;">
+                    <div class="submenu-item" data-option="no_clip">
+                        <i class="ph ph-airplane"></i> <span>No Clip</span>
+                        <label class="switch">
+                            <input type="checkbox" id="no_clip_toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="submenu-item" data-option="god_mode">
+                        <i class="ph ph-shield"></i> <span>God Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="god_mode_toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="submenu-item" data-option="super_jump">
+                        <i class="ph ph-arrow-up"></i> <span>Super Jump</span>
+                        <label class="switch">
+                            <input type="checkbox" id="super_jump_toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="submenu-item" data-option="invisibility">
+                        <i class="ph ph-eye-slash"></i> <span>Invisibility</span>
+                        <label class="switch">
+                            <input type="checkbox" id="invisibility_toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="menu-footer">
-                Version: Beta | 24hrs ago <span class="right-text" id="menu-counter">1/9</span>
+                Version: Beta | Aug 19, 2025 | 07:49 PM EDT <span class="right-text" id="menu-counter">1/9</span>
             </div>
         </div>
     </div>
     <script>
         let selectedIndex = 0;
+        let submenuSelectedIndex = 0;
+        let isSubmenuOpen = false;
         const menuItems = document.querySelectorAll('.menu-item');
+        const submenuItems = document.querySelectorAll('.submenu-item');
         const scrollbarThumb = document.getElementById('scrollbar-thumb');
         const menuCounter = document.getElementById('menu-counter');
+        const menuItemsDiv = document.getElementById('menu-items');
+        const selfSubmenu = document.getElementById('self-submenu');
         const totalItems = menuItems.length;
-        const scrollbarHeight = 300; // Height of scrollbar-container
-        const thumbHeight = 40; // Height of scrollbar-thumb
-        const maxScrollHeight = scrollbarHeight - thumbHeight; // Adjusted for thumb height
+        const submenuTotal = submenuItems.length;
+        const scrollbarHeight = 400; // Adjusted to show all items
+        const thumbHeight = 40;
+        const maxScrollHeight = scrollbarHeight - thumbHeight;
 
         function updateMenuSelection(direction) {
-            menuItems[selectedIndex].classList.remove('selected');
-            selectedIndex = (selectedIndex + direction + totalItems) % totalItems;
-            menuItems[selectedIndex].classList.add('selected');
-            
-            const scrollStep = maxScrollHeight / (totalItems - 1);
-            const thumbPosition = selectedIndex * scrollStep;
-            scrollbarThumb.style.top = `${Math.min(Math.max(thumbPosition, 0), maxScrollHeight)}px`;
-            menuCounter.textContent = `${selectedIndex + 1}/${totalItems}`;
-            console.log(`Updated selection: index=${selectedIndex}, thumbPosition=${thumbPosition}`);
+            if (!isSubmenuOpen) {
+                menuItems[selectedIndex].classList.remove('selected');
+                selectedIndex = (selectedIndex + direction + totalItems) % totalItems;
+                menuItems[selectedIndex].classList.add('selected');
+                
+                const scrollStep = maxScrollHeight / (totalItems - 1);
+                const thumbPosition = selectedIndex * scrollStep;
+                scrollbarThumb.style.top = `${Math.min(Math.max(thumbPosition, 0), maxScrollHeight)}px`;
+                if (menuCounter) menuCounter.textContent = `${selectedIndex + 1}/${totalItems}`; // Safe check
+                console.log(`Updated main selection: index=${selectedIndex}, thumbPosition=${thumbPosition}`);
+            }
+        }
+
+        function updateSubmenuSelection(direction) {
+            if (isSubmenuOpen) {
+                submenuItems[submenuSelectedIndex].classList.remove('selected');
+                submenuSelectedIndex = (submenuSelectedIndex + direction + submenuTotal) % submenuTotal;
+                submenuItems[submenuSelectedIndex].classList.add('selected');
+                console.log(`Updated submenu selection: index=${submenuSelectedIndex}`);
+            }
+        }
+
+        function toggleSubmenu() {
+            if (selectedIndex === 0 && !isSubmenuOpen) {
+                isSubmenuOpen = true;
+                menuItemsDiv.style.display = 'none';
+                selfSubmenu.style.display = 'block';
+                submenuSelectedIndex = 0;
+                submenuItems[submenuSelectedIndex].classList.add('selected');
+                console.log(`Opened submenu`);
+            }
+        }
+
+        function closeSubmenu() {
+            if (isSubmenuOpen) {
+                isSubmenuOpen = false;
+                selfSubmenu.style.display = 'none';
+                menuItemsDiv.style.display = 'flex';
+                menuItems[selectedIndex].classList.add('selected');
+                submenuItems.forEach(item => item.classList.remove('selected'));
+                console.log(`Closed submenu`);
+            }
+        }
+
+        function toggleOption() {
+            if (isSubmenuOpen) {
+                const option = submenuItems[submenuSelectedIndex].dataset.option;
+                const toggle = document.getElementById(`${option}_toggle`);
+                if (toggle) {
+                    toggle.checked = !toggle.checked;
+                    console.log(`Toggled option: ${option}, state: ${toggle.checked}`);
+                    window.postMessage({
+                        type: "self_option",
+                        option: option,
+                        state: toggle.checked
+                    }, "*");
+                }
+            }
         }
 
         // NUI message handler
@@ -60,30 +145,58 @@
             console.log('NUI Message Received:', JSON.stringify(event.data));
             if (event.data && event.data.type === "scroll") {
                 if (event.data.amount < 0) {
-                    updateMenuSelection(-1);
+                    if (isSubmenuOpen) {
+                        updateSubmenuSelection(-1);
+                    } else {
+                        updateMenuSelection(-1);
+                    }
                 } else if (event.data.amount > 0) {
-                    updateMenuSelection(1);
+                    if (isSubmenuOpen) {
+                        updateSubmenuSelection(1);
+                    } else {
+                        updateMenuSelection(1);
+                    }
                 }
             }
         });
 
-        // Keyboard events for arrow keys (fallback for testing)
+        // Keyboard and hover events
         window.addEventListener('keydown', function(event) {
-            console.log('Key Pressed:', event.key);
+            console.log('Key Pressed:', event.key, 'Submenu Open:', isSubmenuOpen);
             if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                updateMenuSelection(-1);
+                if (isSubmenuOpen) updateSubmenuSelection(-1);
+                else updateMenuSelection(-1);
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                updateMenuSelection(1);
+                if (isSubmenuOpen) updateSubmenuSelection(1);
+                else updateMenuSelection(1);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (isSubmenuOpen) toggleOption();
+                else toggleSubmenu();
+            } else if (event.key === 'Backspace') {
+                event.preventDefault();
+                closeSubmenu();
             }
+        });
+
+        submenuItems.forEach(item => {
+            item.addEventListener('mouseover', function() {
+                if (isSubmenuOpen) {
+                    submenuItems.forEach(i => i.classList.remove('selected'));
+                    this.classList.add('selected');
+                    submenuSelectedIndex = Array.from(submenuItems).indexOf(this);
+                    console.log(`Hovered: ${this.dataset.option}, index=${submenuSelectedIndex}`);
+                }
+            });
         });
 
         // Ensure focus for CEF
         window.onload = function() {
             window.focus();
-            document.body.tabIndex = 0; // Make body focusable
-            document.body.focus(); // Force focus
+            document.body.tabIndex = 0;
+            document.body.focus();
             console.log('UI Loaded and Focused');
         };
     </script>
@@ -105,7 +218,7 @@
     }
     .scrollbar-container {
         width: 10px;
-        height: 300px;
+        height: 400px; // Adjusted to show all items
         background: #111;
         border-radius: 20px;
         position: relative;
@@ -113,7 +226,6 @@
         margin-right: 10px;
         box-shadow: inset 0 0 3px #000;
     }
-
     .scrollbar-thumb {
         width: 100%;
         height: 40px; 
@@ -123,7 +235,6 @@
         top: 0; 
         margin: 4px 0;
     }
-
     .menu-container {
         width: 400px;
         background: #000000e5;
@@ -144,7 +255,7 @@
     .menu-header {
         background: rgba(0, 0, 0, 0.8);
         color: white;
-        font-family: Arial, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
         font-size: 15px;
         padding: 5px;
         font-weight: 600;
@@ -152,14 +263,13 @@
     }
     .menu-items-container {
         position: relative;
+        padding: 10px;
     }
-
     .menu-items {
         display: flex;
         flex-direction: column;
         gap: 8px;
     }
-
     .menu-item {
         padding: 12px 20px;
         color: white;
@@ -171,26 +281,87 @@
         gap: 10px;
         font-weight: 550;
         transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        background: #0c2a3c;
+        border-radius: 5px;
     }
-
     .menu-item i {
         font-size: 20px;
     }
-
     .menu-item span {
         flex-grow: 1;
         text-align: left;
     }
-
     .menu-item.selected {
-        background-color: #0c2a3c;
-        box-shadow: inset 0 0 0 1px #2d4555;
+        background-color: #2d4555;
+        box-shadow: inset 0 0 0 1px #3a5f78;
     }
-
+    .submenu-container {
+        margin-top: 10px;
+        display: none;
+    }
+    .submenu-item {
+        padding: 10px 15px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 14px;
+        gap: 10px;
+        background: #0c2a3c;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .submenu-item:hover, .submenu-item.selected {
+        background-color: #2d4555;
+        box-shadow: inset 0 0 0 1px #3a5f78;
+    }
+    .submenu-item i {
+        font-size: 18px;
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+    }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #666;
+        transition: 0.2s;
+        border-radius: 20px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.2s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #4CAF50;
+    }
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
     .menu-footer {
         background: rgba(0, 0, 0, 0.8);
         color: white;
-        font-family: Arial, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
         font-size: 14px;
         padding: 10px;
         display: flex;
