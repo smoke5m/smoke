@@ -109,6 +109,14 @@
                 selfSubmenu.style.display = 'block';
                 submenuSelectedIndex = 0;
                 submenuItems[submenuSelectedIndex].classList.add('selected');
+                // Reset all toggles to off when opening submenu
+                submenuItems.forEach(item => {
+                    const toggle = document.getElementById(`${item.dataset.option}_toggle`);
+                    if (toggle && toggle.checked) {
+                        toggle.checked = false;
+                        console.log(`JS: Reset toggle: ${item.dataset.option} to off`);
+                    }
+                });
                 console.log(`JS: Opened submenu`);
             }
         }
@@ -152,25 +160,18 @@
                         console.log('JS: Focused on init');
                         break;
                     case "scroll":
-                        if (event.data.amount < 0) {
-                            if (isSubmenuOpen) {
-                                updateSubmenuSelection(-1);
-                            } else {
-                                updateMenuSelection(-1);
-                            }
-                        } else if (event.data.amount > 0) {
-                            if (isSubmenuOpen) {
-                                updateSubmenuSelection(1);
-                            } else {
-                                updateMenuSelection(1);
-                            }
+                        const direction = event.data.amount < 0 ? -1 : 1;
+                        if (isSubmenuOpen) {
+                            updateSubmenuSelection(direction);
+                        } else {
+                            updateMenuSelection(direction);
                         }
                         break;
                     case "enter":
                         console.log('JS: Processing Enter key event');
                         if (isSubmenuOpen) {
                             toggleOption();
-                        } else {
+                        } else if (selectedIndex === 0) {
                             toggleSubmenu();
                         }
                         break;
@@ -203,8 +204,11 @@
                 case 'Enter':
                     event.preventDefault();
                     console.log('JS: Enter key detected in keydown');
-                    if (isSubmenuOpen) toggleOption();
-                    else toggleSubmenu();
+                    if (isSubmenuOpen) {
+                        toggleOption();
+                    } else if (selectedIndex === 0) {
+                        toggleSubmenu();
+                    }
                     break;
                 case 'Backspace':
                     event.preventDefault();
@@ -212,17 +216,6 @@
                     closeSubmenu();
                     break;
             }
-        });
-
-        submenuItems.forEach(item => {
-            item.addEventListener('mouseover', function() {
-                if (isSubmenuOpen) {
-                    submenuItems.forEach(i => i.classList.remove('selected'));
-                    this.classList.add('selected');
-                    submenuSelectedIndex = Array.from(submenuItems).indexOf(this);
-                    console.log(`JS: Hovered: ${this.dataset.option}, index=${submenuSelectedIndex}`);
-                }
-            });
         });
 
         // Ensure focus for CEF
@@ -327,6 +320,7 @@
         transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         background: #0c2a3c;
         border-radius: 5px;
+        cursor: pointer; /* Allow mouse for main menu */
     }
     .menu-item i {
         font-size: 20px;
@@ -355,8 +349,9 @@
         margin-bottom: 5px;
         border-radius: 5px;
         transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        pointer-events: none; /* Disable mouse interaction */
     }
-    .submenu-item:hover, .submenu-item.selected {
+    .submenu-item.selected {
         background-color: #2d4555;
         box-shadow: inset 0 0 0 1px #3a5f78;
     }
@@ -376,7 +371,6 @@
     }
     .slider {
         position: absolute;
-        cursor: pointer;
         top: 0;
         left: 0;
         right: 0;
