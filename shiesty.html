@@ -89,7 +89,7 @@
                 const thumbPosition = selectedIndex * scrollStep;
                 scrollbarThumb.style.top = `${Math.min(Math.max(thumbPosition, 0), maxScrollHeight)}px`;
                 if (menuCounter) menuCounter.textContent = `${selectedIndex + 1}/${totalItems}`;
-                console.log(`Updated main selection: index=${selectedIndex}, thumbPosition=${thumbPosition}`);
+                console.log(`JS: Updated main selection: index=${selectedIndex}, thumbPosition=${thumbPosition}`);
             }
         }
 
@@ -98,7 +98,7 @@
                 submenuItems[submenuSelectedIndex].classList.remove('selected');
                 submenuSelectedIndex = (submenuSelectedIndex + direction + submenuTotal) % submenuTotal;
                 submenuItems[submenuSelectedIndex].classList.add('selected');
-                console.log(`Updated submenu selection: index=${submenuSelectedIndex}`);
+                console.log(`JS: Updated submenu selection: index=${submenuSelectedIndex}`);
             }
         }
 
@@ -109,7 +109,7 @@
                 selfSubmenu.style.display = 'block';
                 submenuSelectedIndex = 0;
                 submenuItems[submenuSelectedIndex].classList.add('selected');
-                console.log(`Opened submenu`);
+                console.log(`JS: Opened submenu`);
             }
         }
 
@@ -120,7 +120,7 @@
                 menuItemsDiv.style.display = 'flex';
                 menuItems[selectedIndex].classList.add('selected');
                 submenuItems.forEach(item => item.classList.remove('selected'));
-                console.log(`Closed submenu`);
+                console.log(`JS: Closed submenu`);
             }
         }
 
@@ -130,7 +130,7 @@
                 const toggle = document.getElementById(`${option}_toggle`);
                 if (toggle) {
                     toggle.checked = !toggle.checked;
-                    console.log(`Toggled option: ${option}, state: ${toggle.checked}`);
+                    console.log(`JS: Toggled option: ${option}, state: ${toggle.checked}`);
                     window.postMessage({
                         type: "self_option",
                         option: option,
@@ -142,60 +142,75 @@
 
         // NUI message handler
         window.addEventListener("message", function (event) {
-            console.log('NUI Message Received:', JSON.stringify(event.data));
+            console.log('JS: NUI Message Received:', JSON.stringify(event.data));
             if (event.data && event.data.type) {
-                if (event.data.type === "scroll") {
-                    if (event.data.amount < 0) {
-                        if (isSubmenuOpen) {
-                            updateSubmenuSelection(-1);
-                        } else {
-                            updateMenuSelection(-1);
+                switch (event.data.type) {
+                    case "init":
+                        console.log('JS: Received init message:', event.data.data);
+                        window.focus();
+                        document.body.focus();
+                        console.log('JS: Focused on init');
+                        break;
+                    case "scroll":
+                        if (event.data.amount < 0) {
+                            if (isSubmenuOpen) {
+                                updateSubmenuSelection(-1);
+                            } else {
+                                updateMenuSelection(-1);
+                            }
+                        } else if (event.data.amount > 0) {
+                            if (isSubmenuOpen) {
+                                updateSubmenuSelection(1);
+                            } else {
+                                updateMenuSelection(1);
+                            }
                         }
-                    } else if (event.data.amount > 0) {
+                        break;
+                    case "enter":
+                        console.log('JS: Processing Enter key event');
                         if (isSubmenuOpen) {
-                            updateSubmenuSelection(1);
+                            toggleOption();
                         } else {
-                            updateMenuSelection(1);
+                            toggleSubmenu();
                         }
-                    }
-                } else if (event.data.type === "enter") {
-                    console.log('Processing Enter key event');
-                    if (isSubmenuOpen) {
-                        toggleOption();
-                    } else {
-                        toggleSubmenu();
-                    }
-                } else if (event.data.type === "back") {
-                    console.log('Processing Back key event');
-                    closeSubmenu();
-                } else if (event.data.type === "init") {
-                    console.log('Received init message:', event.data.data);
-                    // Ensure focus on init
-                    window.focus();
-                    document.body.focus();
+                        break;
+                    case "back":
+                        console.log('JS: Processing Back key event');
+                        closeSubmenu();
+                        break;
+                    default:
+                        console.log('JS: Unknown message type:', event.data.type);
                 }
+            } else {
+                console.log('JS: Invalid or missing message data');
             }
         });
 
-        // Keyboard and hover events
+        // Keyboard events as fallback
         window.addEventListener('keydown', function(event) {
-            console.log('Key Pressed:', event.key, 'Submenu Open:', isSubmenuOpen);
-            if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                if (isSubmenuOpen) updateSubmenuSelection(-1);
-                else updateMenuSelection(-1);
-            } else if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (isSubmenuOpen) updateSubmenuSelection(1);
-                else updateMenuSelection(1);
-            } else if (event.key === 'Enter') {
-                event.preventDefault();
-                console.log('Enter key detected in keydown');
-                if (isSubmenuOpen) toggleOption();
-                else toggleSubmenu();
-            } else if (event.key === 'Backspace') {
-                event.preventDefault();
-                closeSubmenu();
+            console.log('JS: Key Pressed:', event.key, 'Submenu Open:', isSubmenuOpen);
+            switch (event.key) {
+                case 'ArrowUp':
+                    event.preventDefault();
+                    if (isSubmenuOpen) updateSubmenuSelection(-1);
+                    else updateMenuSelection(-1);
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    if (isSubmenuOpen) updateSubmenuSelection(1);
+                    else updateMenuSelection(1);
+                    break;
+                case 'Enter':
+                    event.preventDefault();
+                    console.log('JS: Enter key detected in keydown');
+                    if (isSubmenuOpen) toggleOption();
+                    else toggleSubmenu();
+                    break;
+                case 'Backspace':
+                    event.preventDefault();
+                    console.log('JS: Backspace key detected in keydown');
+                    closeSubmenu();
+                    break;
             }
         });
 
@@ -205,7 +220,7 @@
                     submenuItems.forEach(i => i.classList.remove('selected'));
                     this.classList.add('selected');
                     submenuSelectedIndex = Array.from(submenuItems).indexOf(this);
-                    console.log(`Hovered: ${this.dataset.option}, index=${submenuSelectedIndex}`);
+                    console.log(`JS: Hovered: ${this.dataset.option}, index=${submenuSelectedIndex}`);
                 }
             });
         });
@@ -215,17 +230,17 @@
             window.focus();
             document.body.tabIndex = 0;
             document.body.focus();
-            console.log('UI Loaded and Focused');
+            console.log('JS: UI Loaded and Focused');
         };
 
         // Periodic focus enforcement
         setInterval(() => {
             if (document.hasFocus()) {
-                console.log('Document has focus');
+                console.log('JS: Document has focus');
             } else {
                 window.focus();
                 document.body.focus();
-                console.log('Re-focused document');
+                console.log('JS: Re-focused document');
             }
         }, 1000);
     </script>
