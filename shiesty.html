@@ -171,8 +171,6 @@
         }
         .checkbox.on::after {
             transform: translateX(16px);
-
-
             background: var(--checkbox-on-color);
         }
 
@@ -276,7 +274,7 @@
         </div>
     </div>
     
-    <div class="menu-items" id="menuItems">
+    <div class="menu-items" id="menuItems" tabindex="0">
         <div class="selector" id="selector"></div>
         
         <div class="main-menu">
@@ -370,6 +368,9 @@
             const playerSubmenuItems = document.querySelectorAll('#playerSubmenu .menu-item');
             let currentItems = mainMenuItems;
             let numItems = currentItems.length;
+
+            // Set focus to menu-items container on page load
+            menuItemsContainer.focus();
 
             // --- Notification Function ---
             function showNotification(message) {
@@ -516,4 +517,3 @@
     </script>
 </body>
 </html>
-
