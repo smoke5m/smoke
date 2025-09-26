@@ -92,7 +92,9 @@
         }
         
         .menu-bar-tab {
-            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
+            /* Default non-active state for sub-tabs */
+            background: var(--color-black-section);
+            color: #AAAAAA;
             padding: 6px 15px; 
             border-bottom-right-radius: 0; 
             white-space: nowrap;
@@ -100,9 +102,28 @@
             display: flex;
             align-items: center;
             box-shadow: 1px 0 5px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-bottom: none;
             border-left: none;
             margin-left: -1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-bar-tab.main-active {
+            /* Active state for Main Menu tab (only when active) */
+            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
+            color: var(--color-text-bright);
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-bottom: none;
+        }
+        
+        .menu-bar-sub-tab.active {
+            /* Active state for Submenu tabs */
+            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
+            color: var(--color-text-bright);
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-bottom: none;
         }
 
         /* --- Items Section --- */
@@ -308,13 +329,17 @@
         .main-menu .menu-item {
             display: flex;
         }
+        /* By default, all submenu items are hidden */
         .submenu .menu-item {
             display: none;
         }
+        /* When submenu is active, hide main menu items */
         .submenu-active .main-menu .menu-item {
             display: none;
         }
-        .submenu-active .submenu .menu-item {
+        /* Show the specific active submenu tab items */
+        .submenu-active #playerSubmenu.active-tab .menu-item,
+        .submenu-active #appearanceSubmenu.active-tab .menu-item {
             display: flex;
         }
 
@@ -356,8 +381,12 @@
                 <div class="menu-header">shiesty</div>
             </div>
             
-            <div class="menu-bar">
-                <span class="menu-bar-tab">Main menu</span>
+            <div class="menu-bar" id="menuBar">
+                <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
+
+                <span class="menu-bar-tab menu-bar-sub-tab" id="playerSubTab" data-tab-key="player">Player</span>
+                <span class="menu-bar-tab menu-bar-sub-tab" id="appearanceSubTab" data-tab-key="appearance">Appearance</span>
+
             </div>
         </div>
         
@@ -411,26 +440,46 @@
                 </div>
             </div>
             
-            <div class="submenu" id="playerSubmenu">
-                <div class="menu-item" data-action="player-health">
-                    <span>Health</span>
-                    <span></span>
+            <div class="submenu">
+                <div id="playerSubmenu" class="sub-tab-content">
+                    <div class="menu-item" data-action="player-revive">
+                        <span>Revive</span>
+                        <span></span>
+                    </div>
+                    <div class="menu-item" data-action="player-health">
+                        <span>Health</span>
+                        <span></span>
+                    </div>
+                    <div class="menu-item" data-action="player-godmode">
+                        <span>Godmode</span>
+                        <span class="checkbox"></span>
+                    </div>
+                    <div class="menu-item" data-action="player-noclip">
+                        <span>Noclip</span>
+                        <span class="checkbox"></span>
+                    </div>
+                    <div class="menu-item" data-action="player-invisible">
+                        <span>invisible</span>
+                        <span class="checkbox"></span>
+                    </div>
+                    <div class="menu-item" data-action="player-fastrun">
+                        <span>Fast Run</span>
+                        <span class="checkbox"></span>
+                    </div>
                 </div>
-                <div class="menu-item" data-action="player-armor">
-                    <span>Armor</span>
-                    <span></span>
-                </div>
-                <div class="menu-item" data-action="player-noclip">
-                    <span>Noclip</span>
-                    <span class="checkbox"></span>
-                </div>
-                <div class="menu-item" data-action="player-godmode">
-                    <span>Godmode</span>
-                    <span class="checkbox"></span>
-                </div>
-                <div class="menu-item" data-action="player-fastrun">
-                    <span>Fast Run</span>
-                    <span class="checkbox"></span>
+
+                <div id="appearanceSubmenu" class="sub-tab-content">
+                    <div class="menu-item" data-action="appearance-model">
+                        <span>Change Model</span>
+                        <span></span>
+                    </div>
+                    <div class="menu-item" data-action="appearance-hat">
+                        <span>Toggle Hat</span>
+                        <span class="checkbox"></span>
+                    </div>
+                    <div class="menu-item" data-action="appearance-accessories">
+                        <span>Random Accessories</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -469,11 +518,17 @@
             const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
             const scrollIndicatorBar = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar'); 
             const scrollThumb = document.getElementById('scrollThumb'); 
+            const mainMenuTab = document.getElementById('mainMenuTab');
+            const playerSubTab = document.getElementById('playerSubTab');
+            const appearanceSubTab = document.getElementById('appearanceSubTab');
+            const subTabs = [playerSubTab, appearanceSubTab];
+            let subTabIndex = 0; // Index for current active sub-tab (0 for Player, 1 for Appearance)
+
             let selectedIndex = 0;
             let scrollInterval = null;
             let currentDirection = 0; 
             let isSubmenuActive = false;
-            let currentMenu = 'main';
+            let currentMenu = 'main'; // 'main', 'player', or 'appearance'
             
             const repeatRate = 120; 
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
@@ -482,8 +537,33 @@
 
             const mainMenuItems = document.querySelectorAll('.main-menu .menu-item');
             const playerSubmenuItems = document.querySelectorAll('#playerSubmenu .menu-item');
+            const appearanceSubmenuItems = document.querySelectorAll('#appearanceSubmenu .menu-item');
+            
+            const allSubmenuItems = {
+                'player': playerSubmenuItems,
+                'appearance': appearanceSubmenuItems
+            };
+
             let currentItems = mainMenuItems;
             let numItems = currentItems.length;
+
+            // --- Menu Bar Tab Visibility and Active State ---
+            function updateMenuBar() {
+                if (currentMenu === 'main') {
+                    mainMenuTab.classList.add('main-active');
+                    mainMenuTab.style.display = 'flex';
+                    subTabs.forEach(tab => tab.style.display = 'none');
+                } else if (isSubmenuActive) {
+                    mainMenuTab.classList.remove('main-active');
+                    mainMenuTab.style.display = 'none';
+                    subTabs.forEach(tab => {
+                        tab.style.display = 'flex';
+                        tab.classList.remove('active');
+                    });
+                    // Set the active sub-tab
+                    subTabs[subTabIndex].classList.add('active');
+                }
+            }
 
             // --- Scroll Indicator Logic ---
             function updateScrollIndicator() {
@@ -565,27 +645,66 @@
                 currentDirection = 0;
             }
 
-            function switchToSubmenu() {
-                isSubmenuActive = true;
-                currentMenu = 'player';
-                menuItemsContainer.classList.add('submenu-active');
-                document.querySelector('.menu-bar-tab').textContent = 'Player';
-                currentItems = playerSubmenuItems;
+            function setActiveSubTab(tabKey) {
+                // 1. Update currentMenu and subTabIndex
+                currentMenu = tabKey;
+                subTabIndex = subTabs.findIndex(tab => tab.dataset.tabKey === tabKey);
+                
+                // 2. Set active items
+                currentItems = allSubmenuItems[tabKey];
                 numItems = currentItems.length;
                 selectedIndex = 0;
+
+                // 3. Update the main container class for item visibility
+                document.querySelectorAll('.sub-tab-content').forEach(content => {
+                    content.classList.remove('active-tab');
+                });
+                document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
+
+                // 4. Update menu bar visuals
+                updateMenuBar();
+                
+                // 5. Update selector position/scrollbar
                 updateSelection();
+            }
+
+            function switchToSubmenu() {
+                isSubmenuActive = true;
+                menuItemsContainer.classList.add('submenu-active');
+                setActiveSubTab('player'); // Default to 'player' sub-tab on entering submenu
             }
 
             function switchToMainMenu() {
                 isSubmenuActive = false;
                 currentMenu = 'main';
                 menuItemsContainer.classList.remove('submenu-active');
-                document.querySelector('.menu-bar-tab').textContent = 'Main menu';
+                document.querySelectorAll('.sub-tab-content').forEach(content => {
+                    content.classList.remove('active-tab');
+                });
+
                 currentItems = mainMenuItems;
                 numItems = mainMenuItems.length;
-                selectedIndex = 0;
+                selectedIndex = 0; // Reset index to 'Player' in main menu
+                
+                updateMenuBar();
                 updateSelection();
             }
+
+            // --- Tab Switching Logic (Q and E) ---
+            function switchSubTab(direction) {
+                if (!isSubmenuActive) return;
+
+                let newIndex = subTabIndex + direction;
+                
+                if (newIndex < 0) {
+                    newIndex = subTabs.length - 1;
+                } else if (newIndex >= subTabs.length) {
+                    newIndex = 0;
+                }
+                
+                setActiveSubTab(subTabs[newIndex].dataset.tabKey);
+            }
+
 
             // --- Checkbox Toggle Logic ---
             function toggleCheckbox(item) {
@@ -619,19 +738,25 @@
                     
                     if (currentMenu === 'main' && action === 'player') {
                         switchToSubmenu();
-                    } else if (currentMenu === 'player') {
-                        if (action === 'player-health' || action === 'player-armor') {
+                    } else if (isSubmenuActive) {
+                        // All sub-tab items
+                        if (action.includes('health') || action.includes('armor') || action.includes('model') || action.includes('accessories')) {
                             executeAction(action); 
                         } else {
                             toggleCheckbox(selectedItem); 
                         }
                     } else {
+                        // Other main menu items
                         console.log(`Action triggered: ${action}`);
                         showNotification(action); 
                     }
-                } else if (e.key === 'Backspace' && currentMenu === 'player') {
+                } else if (e.key === 'Backspace' && isSubmenuActive) {
                     e.preventDefault();
                     switchToMainMenu(); 
+                } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+                    e.preventDefault();
+                    const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
+                    switchSubTab(direction);
                 }
             });
 
@@ -642,6 +767,7 @@
             });
 
             // Initialize
+            updateMenuBar();
             updateSelection();
         });
     </script>
