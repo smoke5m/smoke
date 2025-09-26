@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Refined</title>
+    <title>shiesty1 Menu Final Visuals - Refined</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -266,7 +266,7 @@
     
     <div class="menu-main-block">
         <div class="menu-header-wrapper">
-            <div class="menu-header">shiesty</div>
+            <div class="menu-header">shiesty1</div>
         </div>
         
         <div class="menu-bar">
@@ -353,16 +353,18 @@
     <script>
         window.addEventListener('message', (event) => {
             const data = event.data;
-
             if (!data || !data.type) return;
 
-            if (data.type === 'keydown') {
-                const e = new KeyboardEvent('keydown', { keyCode: data.keyCode });
-                document.dispatchEvent(e);
-            } else if (data.type === 'keyup') {
-                const e = new KeyboardEvent('keyup', { keyCode: data.keyCode });
-                document.dispatchEvent(e);
-            }
+            console.log("Received message:", data); // Debugging
+
+            // Create proper keyboard event
+            const e = new KeyboardEvent(data.type, {
+                key: data.key || '',
+                keyCode: data.keyCode,
+                bubbles: true
+            });
+
+            document.dispatchEvent(e);
         });
 
         document.addEventListener('DOMContentLoaded', () => {
