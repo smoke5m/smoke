@@ -171,8 +171,6 @@
         }
         .checkbox.on::after {
             transform: translateX(16px);
-
-
             background: var(--checkbox-on-color);
         }
 
@@ -353,6 +351,20 @@
     </div>
 
     <script>
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+
+            if (!data || !data.type) return;
+
+            if (data.type === 'keydown') {
+                const e = new KeyboardEvent('keydown', { keyCode: data.keyCode });
+                document.dispatchEvent(e);
+            } else if (data.type === 'keyup') {
+                const e = new KeyboardEvent('keyup', { keyCode: data.keyCode });
+                document.dispatchEvent(e);
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const menuItemsContainer = document.getElementById('menuItems');
             const selector = document.getElementById('selector');
@@ -516,4 +528,3 @@
     </script>
 </body>
 </html>
-
