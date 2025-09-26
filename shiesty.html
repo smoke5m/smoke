@@ -15,12 +15,17 @@
             --color-black-section: #0A0A0A; /* Deep black tab/footer */
             --color-text-bright: #FFFFFF;
             --item-height: 26px; /* Shorter item height */ 
-            --selector-height: 29px; /* Thinner selector height */
+            --selector-height: 27px; /* Thinner selector height */
             --menu-width: 320px;
             --checkbox-off-color: #ffffff;
             --checkbox-on-color: #f500f0;
             --checkbox-bg: #181818;
             --checkbox-on-bg: #181818;
+            /* New variables for scrollbar */
+            --scrollbar-width: 6px; /* Increased scrollbar width (thicker) */
+            --scrollbar-margin: 10px; /* Adjusted margin from menu body */
+            --scroll-indicator-vertical-padding: 10px; /* Space for arrows top/bottom */
+            --arrow-height: 8px; /* Height of the arrow icon area */
         }
 
         /* --- Global Setup --- */
@@ -35,6 +40,14 @@
             flex-direction: column; 
         }
 
+        /* --- Main Menu Container --- */
+        .menu-container {
+            position: relative; /* All children will be positioned relative to this container */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         /* --- Main Block for Header and Menu Bar --- */
         .menu-main-block {
             width: var(--menu-width);
@@ -46,7 +59,7 @@
         .menu-header-wrapper {
             position: relative;
             height: 100px;
-            background: linear-gradient(135deg, #e100ff 0%, #800080 100%);
+            background: linear-gradient(135deg, var(--color-highlight-pink) 0%, var(--color-highlight-purple) 100%);
             border-bottom-left-radius: 0; 
             border-bottom-right-radius: 0; 
             border-top-left-radius: 8px; 
@@ -79,7 +92,7 @@
         }
         
         .menu-bar-tab {
-            background: linear-gradient(180deg, #000 0%, #e100ff 100%); 
+            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
             padding: 6px 15px; 
             border-bottom-right-radius: 0; 
             white-space: nowrap;
@@ -128,8 +141,8 @@
 
         .selector {
             position: absolute;
-            left: 0;
-            right: 0;
+            left: 0; 
+            width: 100%; 
             height: var(--selector-height);
             margin-top: calc((var(--item-height) - var(--selector-height)) / 2); 
             background: var(--color-highlight-pink);
@@ -143,6 +156,79 @@
             position: relative;
             z-index: 1;
         }
+        
+        /* --- SCROLL INDICATOR STYLES --- */
+        .scroll-indicator-wrapper {
+            position: absolute; 
+            top: 130px; 
+            /* Reposition to the right of the menu block */
+            left: calc(-55% + (var(--menu-width) / 2) + var(--scrollbar-margin) - 5px); /* Adjusted left position */
+            width: var(--scrollbar-width);
+            z-index: 3; 
+            background: #000000; 
+            border-radius: 3px;
+            padding-top: var(--arrow-height);    
+            padding-bottom: var(--arrow-height); 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scroll-indicator-arrow {
+            position: absolute;
+            width: 110%;
+            height: var(--arrow-height);
+            background: #000000; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white; 
+            font-size: 8px; 
+        }
+
+        .scroll-indicator-arrow.top {
+            top: 0;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+
+        .scroll-indicator-arrow.bottom {
+            bottom: 0;
+            border-bottom-left-radius: 3px;
+            border-bottom-right-radius: 3px;
+        }
+
+        .scroll-indicator-bar {
+            position: relative; 
+            height: 100%; 
+            width: 110%;
+            background: #000000; 
+            border-radius: 0; 
+        }
+        
+        .scroll-thumb {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 90%;
+            /* Pink/Purple Gradient for the thumb */
+            background: linear-gradient(180deg, var(--color-highlight-pink) 0%, var(--color-highlight-purple) 100%);
+            /* Pink/Purple Glow */
+            border-radius: 2px; 
+            transition: transform 0.25s ease, height 0.25s ease;
+        }
+        
+        /* Adjust padding for menu items as the scrollbar is now external */
+        .menu-item {
+            padding-left: 15px; 
+        }
+
+        .selector {
+            left: 0; 
+            width: 100%; 
+        }
+
 
         /* --- Checkbox Styles --- */
         .checkbox {
@@ -184,7 +270,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 4px 15px;
-            border-radius: 9px; 
+            border-radius: 5px; 
             margin-top: 5px; 
             margin-left: auto;
             margin-right: auto;
@@ -238,7 +324,7 @@
             top: 50%;
             right: 20px;
             transform: translateY(-50%);
-            background: linear-gradient(135deg, #e100ff 0%, #800080 100%);
+            background: linear-gradient(135deg, var(--color-highlight-pink) 0%, var(--color-highlight-purple) 100%);
             color: var(--color-text-bright);
             padding: 12px 20px;
             border-radius: 6px;
@@ -264,90 +350,100 @@
 </head>
 <body>
     
-    <div class="menu-main-block">
-        <div class="menu-header-wrapper">
-            <div class="menu-header">shiesty</div>
-        </div>
-        
-        <div class="menu-bar">
-            <span class="menu-bar-tab">Main menu</span>
-        </div>
-    </div>
-    
-    <div class="menu-items" id="menuItems">
-        <div class="selector" id="selector"></div>
-        
-        <div class="main-menu">
-            <div class="menu-item" data-action="player">
-                <span>Player</span>
-                <i class="fas fa-chevron-right"></i>
+    <div class="menu-container">
+        <div class="menu-main-block">
+            <div class="menu-header-wrapper">
+                <div class="menu-header">shiesty</div>
             </div>
-            <div class="menu-item" data-action="server">
-                <span>Server</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="weapon">
-                <span>Weapon</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="combat">
-                <span>Combat</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="vehicle">
-                <span>Vehicle</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="visual">
-                <span>Visual</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="miscellaneous">
-                <span>Miscellaneous</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="settings">
-                <span>Settings</span>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="menu-item" data-action="search">
-                <span>Search</span>
-                <i class="fas fa-search"></i>
+            
+            <div class="menu-bar">
+                <span class="menu-bar-tab">Main menu</span>
             </div>
         </div>
         
-        <div class="submenu" id="playerSubmenu">
-            <div class="menu-item" data-action="player-health">
-                <span>Health</span>
-                <span></span>
+        <div class="scroll-indicator-wrapper" id="scrollIndicatorWrapper">
+            <div class="scroll-indicator-arrow top"><i class="fas fa-chevron-up"></i></div>
+            <div class="scroll-indicator-bar">
+                <div class="scroll-thumb" id="scrollThumb"></div>
             </div>
-            <div class="menu-item" data-action="player-armor">
-                <span>Armor</span>
-                <span></span>
-            </div>
-            <div class="menu-item" data-action="player-noclip">
-                <span>Noclip</span>
-                <span class="checkbox"></span>
-            </div>
-            <div class="menu-item" data-action="player-godmode">
-                <span>Godmode</span>
-                <span class="checkbox"></span>
-            </div>
-            <div class="menu-item" data-action="player-fastrun">
-                <span>Fast Run</span>
-                <span class="checkbox"></span>
-            </div>
+            <div class="scroll-indicator-arrow bottom"><i class="fas fa-chevron-down"></i></div>
         </div>
-    </div>
 
-    <div class="menu-footer">
-        <div class="footer-details">
-            <div class="footer-icon-wrapper">
-                <i class="fas fa-running footer-icon"></i>
+        <div class="menu-items" id="menuItems">
+            <div class="selector" id="selector"></div>
+            
+            <div class="main-menu">
+                <div class="menu-item" data-action="player">
+                    <span>Player</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="server">
+                    <span>Server</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="weapon">
+                    <span>Weapon</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="combat">
+                    <span>Combat</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="vehicle">
+                    <span>Vehicle</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="visual">
+                    <span>Visual</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="miscellaneous">
+                    <span>Miscellaneous</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="settings">
+                    <span>Settings</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="menu-item" data-action="search">
+                    <span>Search</span>
+                    <i class="fas fa-search"></i>
+                </div>
             </div>
-            <span class="footer-info">271078 | 9d ago</span>
+            
+            <div class="submenu" id="playerSubmenu">
+                <div class="menu-item" data-action="player-health">
+                    <span>Health</span>
+                    <span></span>
+                </div>
+                <div class="menu-item" data-action="player-armor">
+                    <span>Armor</span>
+                    <span></span>
+                </div>
+                <div class="menu-item" data-action="player-noclip">
+                    <span>Noclip</span>
+                    <span class="checkbox"></span>
+                </div>
+                <div class="menu-item" data-action="player-godmode">
+                    <span>Godmode</span>
+                    <span class="checkbox"></span>
+                </div>
+                <div class="menu-item" data-action="player-fastrun">
+                    <span>Fast Run</span>
+                    <span class="checkbox"></span>
+                </div>
+            </div>
         </div>
-        <div class="right">1/9</div>
+
+        <div class="menu-footer">
+            <div class="footer-details">
+                <div class="footer-icon-wrapper">
+                    <i class="fas fa-running footer-icon"></i>
+                </div>
+                <span class="footer-info">271078 | 9d ago</span>
+            </div>
+            <div class="right">1/9</div>
+        </div>
     </div>
 
     <script>
@@ -370,47 +466,68 @@
         document.addEventListener('DOMContentLoaded', () => {
             const menuItemsContainer = document.getElementById('menuItems');
             const selector = document.getElementById('selector');
+            const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
+            const scrollIndicatorBar = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar'); 
+            const scrollThumb = document.getElementById('scrollThumb'); 
             let selectedIndex = 0;
             let scrollInterval = null;
-            let currentDirection = 0; // 1 for down, -1 for up, 0 for stop
+            let currentDirection = 0; 
             let isSubmenuActive = false;
             let currentMenu = 'main';
             
-            const repeatRate = 120; // Milliseconds per item movement
+            const repeatRate = 120; 
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
+            const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
 
-            // Define menu items for main and submenu
+
             const mainMenuItems = document.querySelectorAll('.main-menu .menu-item');
             const playerSubmenuItems = document.querySelectorAll('#playerSubmenu .menu-item');
             let currentItems = mainMenuItems;
             let numItems = currentItems.length;
 
+            // --- Scroll Indicator Logic ---
+            function updateScrollIndicator() {
+                // Get the height of the menu-items container
+                const menuHeight = menuItemsContainer.clientHeight;
+                
+                // Adjust scrollIndicatorWrapper height: menuHeight + padding for arrows
+                scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
+                
+                // The container for thumb movement is the 'scroll-indicator-bar'
+                const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
+                
+                const thumbHeight = Math.max(20, (thumbTrackHeight / numItems)); 
+                scrollThumb.style.height = `${thumbHeight}px`;
+
+                const maxThumbTravel = thumbTrackHeight - thumbHeight;
+                const scrollPercentage = numItems > 1 ? selectedIndex / (numItems - 1) : 0; 
+                const thumbPosition = scrollPercentage * maxThumbTravel;
+                
+                scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
+            }
+
             // --- Notification Function ---
             function showNotification(message) {
-                // Remove any existing notification
                 const existingNotification = document.querySelector('.notification');
                 if (existingNotification) {
                     existingNotification.remove();
                 }
 
-                // Create new notification
                 const notification = document.createElement('div');
                 notification.className = 'notification';
                 notification.textContent = `Action: ${message}`;
                 document.body.appendChild(notification);
 
-                // Trigger show animation
                 setTimeout(() => {
                     notification.classList.add('show');
-                }, 10); // Small delay to ensure transition works
+                }, 10);
 
-                // Remove notification after 2 seconds
                 setTimeout(() => {
                     notification.classList.remove('show');
                     notification.classList.add('hide');
                     setTimeout(() => {
                         notification.remove();
-                    }, 300); // Match transition duration
+                    }, 300);
                 }, 2000);
             }
 
@@ -418,6 +535,7 @@
             function updateSelection() {
                 selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
                 document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
+                updateScrollIndicator(); 
             }
 
             function moveSelection() {
@@ -425,9 +543,9 @@
                     selectedIndex = (selectedIndex + currentDirection);
                     
                     if (selectedIndex < 0) {
-                        selectedIndex = numItems - 1; // Wrap to bottom
+                        selectedIndex = numItems - 1; 
                     } else if (selectedIndex >= numItems) {
-                        selectedIndex = 0; // Wrap to top
+                        selectedIndex = 0; 
                     }
                     
                     updateSelection();
@@ -475,15 +593,14 @@
                 if (checkbox) {
                     checkbox.classList.toggle('on');
                     console.log(`Toggled checkbox for: ${item.dataset.action}`);
-                    showNotification(item.dataset.action); // Show notification for checkbox toggle
+                    showNotification(item.dataset.action); 
                 }
             }
 
             // --- Execute Action Logic ---
             function executeAction(action) {
                 console.log(`Executing ${action}`);
-                showNotification(action); // Show notification for action execution
-                // Add actual execution logic here (e.g., game functions)
+                showNotification(action); 
             }
 
             // --- Keyboard Controls ---
@@ -504,17 +621,17 @@
                         switchToSubmenu();
                     } else if (currentMenu === 'player') {
                         if (action === 'player-health' || action === 'player-armor') {
-                            executeAction(action); // Execute action for Health or Armor
+                            executeAction(action); 
                         } else {
-                            toggleCheckbox(selectedItem); // Toggle checkbox for other items
+                            toggleCheckbox(selectedItem); 
                         }
                     } else {
                         console.log(`Action triggered: ${action}`);
-                        showNotification(action); // Show notification for other main menu actions
+                        showNotification(action); 
                     }
                 } else if (e.key === 'Backspace' && currentMenu === 'player') {
                     e.preventDefault();
-                    switchToMainMenu(); // Allow Backspace to return to main menu
+                    switchToMainMenu(); 
                 }
             });
 
@@ -530,4 +647,3 @@
     </script>
 </body>
 </html>
-
