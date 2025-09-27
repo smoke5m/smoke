@@ -9,26 +9,24 @@
     <style>
         /* --- Root Variables --- */
         :root {
-            --color-menu-bg: #00000079; /* Dark gray body */
-            --color-highlight-pink: #e100ff; /* Pink highlight */
-            --color-highlight-purple: #800080; /* Purple for hover/gradient */
-            --color-black-section: #0A0A0A; /* Deep black tab/footer */
+            --color-menu-bg: #00000079; 
+            --color-highlight-pink: #e100ff; 
+            --color-highlight-purple: #800080; 
+            --color-black-section: #0A0A0A; 
             --color-text-bright: #FFFFFF;
-            --item-height: 26px; /* Shorter item height */ 
-            --selector-height: 27px; /* Thinner selector height */
+            --item-height: 26px; 
+            --selector-height: 27px; 
             --menu-width: 320px;
             --checkbox-off-color: #ffffff;
             --checkbox-on-color: #f500f0;
             --checkbox-bg: #181818;
             --checkbox-on-bg: #181818;
-            /* New variables for scrollbar */
-            --scrollbar-width: 6px; /* Increased scrollbar width (thicker) */
-            --scrollbar-margin: 10px; /* Adjusted margin from menu body */
-            --scroll-indicator-vertical-padding: 10px; /* Space for arrows top/bottom */
-            --arrow-height: 8px; /* Height of the arrow icon area */
+            --scrollbar-width: 6px; 
+            --scrollbar-margin: 10px; 
+            --scroll-indicator-vertical-padding: 10px; 
+            --arrow-height: 8px; 
         }
 
-        /* --- Global Setup --- */
         body {
             margin: 0;
             height: 100vh;
@@ -40,22 +38,19 @@
             flex-direction: column; 
         }
 
-        /* --- Main Menu Container --- */
         .menu-container {
-            position: relative; /* All children will be positioned relative to this container */
+            position: relative; 
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* --- Main Block for Header and Menu Bar --- */
         .menu-main-block {
             width: var(--menu-width);
             border-radius: 8px; 
             overflow: hidden;
         }
 
-        /* --- Header Section --- */
         .menu-header-wrapper {
             position: relative;
             height: 100px;
@@ -77,7 +72,6 @@
             text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9); 
         }
 
-        /* --- Menu Bar --- */
         .menu-bar {
             background: var(--color-black-section); 
             padding: 0;
@@ -92,7 +86,6 @@
         }
         
         .menu-bar-tab {
-            /* Default non-active state for sub-tabs */
             background: var(--color-black-section);
             color: #AAAAAA;
             padding: 6px 15px; 
@@ -111,7 +104,6 @@
         }
 
         .menu-bar-tab.main-active {
-            /* Active state for Main Menu tab (only when active) */
             background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
             color: var(--color-text-bright);
             border: 1px solid rgba(255, 255, 255, 0.2); 
@@ -119,14 +111,12 @@
         }
         
         .menu-bar-sub-tab.active {
-            /* Active state for Submenu tabs */
             background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
             color: var(--color-text-bright);
             border: 1px solid rgba(255, 255, 255, 0.2); 
             border-bottom: none;
         }
 
-        /* --- Items Section --- */
         .menu-items {
             width: var(--menu-width);
             background: var(--color-menu-bg);
@@ -177,13 +167,11 @@
             position: relative;
             z-index: 1;
         }
-        
-        /* --- SCROLL INDICATOR STYLES --- */
+
         .scroll-indicator-wrapper {
             position: absolute; 
             top: 130px; 
-            /* Reposition to the right of the menu block */
-            left: calc(-55% + (var(--menu-width) / 2) + var(--scrollbar-margin) - 5px); /* Adjusted left position */
+            left: calc(-55% + (var(--menu-width) / 2) + var(--scrollbar-margin) - 5px);
             width: var(--scrollbar-width);
             z-index: 3; 
             background: #000000; 
@@ -233,25 +221,11 @@
             top: 0;
             left: 0;
             width: 90%;
-            /* Pink/Purple Gradient for the thumb */
             background: linear-gradient(180deg, var(--color-highlight-pink) 0%, var(--color-highlight-purple) 100%);
-            /* Pink/Purple Glow */
             border-radius: 2px; 
             transition: transform 0.25s ease, height 0.25s ease;
         }
-        
-        /* Adjust padding for menu items as the scrollbar is now external */
-        .menu-item {
-            padding-left: 15px; 
-        }
 
-        .selector {
-            left: 0; 
-            width: 100%; 
-        }
-
-
-        /* --- Checkbox Styles --- */
         .checkbox {
             width: 30px;
             height: 14px;
@@ -281,7 +255,6 @@
             background: var(--checkbox-on-color);
         }
 
-        /* --- Footer Section --- */
         .menu-footer {
             width: calc(var(--menu-width) - 30px);
             background: var(--color-black-section);
@@ -325,25 +298,12 @@
             white-space: nowrap;
         }
 
-        /* --- Submenu Styles --- */
-        .main-menu .menu-item {
-            display: flex;
-        }
-        /* By default, all submenu items are hidden */
-        .submenu .menu-item {
-            display: none;
-        }
-        /* When submenu is active, hide main menu items */
-        .submenu-active .main-menu .menu-item {
-            display: none;
-        }
-        /* Show the specific active submenu tab items */
+        .main-menu .menu-item { display: flex; }
+        .submenu .menu-item { display: none; }
+        .submenu-active .main-menu .menu-item { display: none; }
         .submenu-active #playerSubmenu.active-tab .menu-item,
-        .submenu-active #appearanceSubmenu.active-tab .menu-item {
-            display: flex;
-        }
+        .submenu-active #appearanceSubmenu.active-tab .menu-item { display: flex; }
 
-        /* --- Notification Styles --- */
         .notification {
             position: fixed;
             top: 50%;
@@ -383,10 +343,8 @@
             
             <div class="menu-bar" id="menuBar">
                 <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
-
                 <span class="menu-bar-tab menu-bar-sub-tab" id="playerSubTab" data-tab-key="player">Player</span>
                 <span class="menu-bar-tab menu-bar-sub-tab" id="appearanceSubTab" data-tab-key="appearance">Appearance</span>
-
             </div>
         </div>
         
@@ -402,97 +360,39 @@
             <div class="selector" id="selector"></div>
             
             <div class="main-menu">
-                <div class="menu-item" data-action="player">
-                    <span>Player</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="server">
-                    <span>Server</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="weapon">
-                    <span>Weapon</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="combat">
-                    <span>Combat</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="vehicle">
-                    <span>Vehicle</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="visual">
-                    <span>Visual</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="miscellaneous">
-                    <span>Miscellaneous</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="settings">
-                    <span>Settings</span>
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="menu-item" data-action="search">
-                    <span>Search</span>
-                    <i class="fas fa-search"></i>
-                </div>
+                <div class="menu-item" data-action="player"><span>Player</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="server"><span>Server</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="weapon"><span>Weapon</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="combat"><span>Combat</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="vehicle"><span>Vehicle</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="visual"><span>Visual</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="miscellaneous"><span>Miscellaneous</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="settings"><span>Settings</span><i class="fas fa-chevron-right"></i></div>
+                <div class="menu-item" data-action="search"><span>Search</span><i class="fas fa-search"></i></div>
             </div>
             
             <div class="submenu">
                 <div id="playerSubmenu" class="sub-tab-content">
-                    <div class="menu-item" data-action="player-revive">
-                        <span>Revive</span>
-                        <span></span>
-                    </div>
-                    <div class="menu-item" data-action="player-health">
-                        <span>Health</span>
-                        <span></span>
-                    </div>
-                    <div class="menu-item" data-action="player-armor">
-                        <span>Armor</span>
-                        <span></span>
-                    </div>
-                    <div class="menu-item" data-action="player-godmode">
-                        <span>Godmode</span>
-                        <span class="checkbox"></span>
-                    </div>
-                    <div class="menu-item" data-action="player-noclip">
-                        <span>Noclip</span>
-                        <span class="checkbox"></span>
-                    </div>
-                    <div class="menu-item" data-action="player-invisible">
-                        <span>invisible</span>
-                        <span class="checkbox"></span>
-                    </div>
-                    <div class="menu-item" data-action="player-fastrun">
-                        <span>Fast Run</span>
-                        <span class="checkbox"></span>
-                    </div>
+                    <div class="menu-item" data-action="player-revive"><span>Revive</span><span></span></div>
+                    <div class="menu-item" data-action="player-health"><span>Health</span><span></span></div>
+                    <div class="menu-item" data-action="player-armor"><span>Armor</span><span></span></div>
+                    <div class="menu-item" data-action="player-godmode"><span>Godmode</span><span class="checkbox"></span></div>
+                    <div class="menu-item" data-action="player-noclip"><span>Noclip</span><span class="checkbox"></span></div>
+                    <div class="menu-item" data-action="player-invisible"><span>Invisible</span><span class="checkbox"></span></div>
+                    <div class="menu-item" data-action="player-fastrun"><span>Fast Run</span><span class="checkbox"></span></div>
                 </div>
 
                 <div id="appearanceSubmenu" class="sub-tab-content">
-                    <div class="menu-item" data-action="appearance-model">
-                        <span>Change Model</span>
-                        <span></span>
-                    </div>
-                    <div class="menu-item" data-action="appearance-hat">
-                        <span>Toggle Hat</span>
-                        <span class="checkbox"></span>
-                    </div>
-                    <div class="menu-item" data-action="appearance-accessories">
-                        <span>Random Accessories</span>
-                    </div>
+                    <div class="menu-item" data-action="appearance-model"><span>Change Model</span><span></span></div>
+                    <div class="menu-item" data-action="appearance-hat"><span>Toggle Hat</span><span class="checkbox"></span></div>
+                    <div class="menu-item" data-action="appearance-accessories"><span>Random Accessories</span></div>
                 </div>
             </div>
         </div>
 
         <div class="menu-footer">
             <div class="footer-details">
-                <div class="footer-icon-wrapper">
-                    <i class="fas fa-running footer-icon"></i>
-                </div>
+                <div class="footer-icon-wrapper"><i class="fas fa-running footer-icon"></i></div>
                 <span class="footer-info">271078 | 9d ago</span>
             </div>
             <div class="right">1/9</div>
@@ -504,9 +404,6 @@
             const data = event.data;
             if (!data || !data.type) return;
 
-            console.log("Received message:", data); // Debugging
-
-            // Create proper keyboard event
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
                 keyCode: data.keyCode,
@@ -526,32 +423,26 @@
             const playerSubTab = document.getElementById('playerSubTab');
             const appearanceSubTab = document.getElementById('appearanceSubTab');
             const subTabs = [playerSubTab, appearanceSubTab];
-            let subTabIndex = 0; // Index for current active sub-tab (0 for Player, 1 for Appearance)
+            let subTabIndex = 0;
 
             let selectedIndex = 0;
             let scrollInterval = null;
             let currentDirection = 0; 
             let isSubmenuActive = false;
-            let currentMenu = 'main'; // 'main', 'player', or 'appearance'
-            
+            let currentMenu = 'main';
+
             const repeatRate = 120; 
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
             const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
-
 
             const mainMenuItems = document.querySelectorAll('.main-menu .menu-item');
             const playerSubmenuItems = document.querySelectorAll('#playerSubmenu .menu-item');
             const appearanceSubmenuItems = document.querySelectorAll('#appearanceSubmenu .menu-item');
             
-            const allSubmenuItems = {
-                'player': playerSubmenuItems,
-                'appearance': appearanceSubmenuItems
-            };
-
+            const allSubmenuItems = { 'player': playerSubmenuItems, 'appearance': appearanceSubmenuItems };
             let currentItems = mainMenuItems;
             let numItems = currentItems.length;
 
-            // --- Menu Bar Tab Visibility and Active State ---
             function updateMenuBar() {
                 if (currentMenu === 'main') {
                     mainMenuTab.classList.add('main-active');
@@ -560,62 +451,40 @@
                 } else if (isSubmenuActive) {
                     mainMenuTab.classList.remove('main-active');
                     mainMenuTab.style.display = 'none';
-                    subTabs.forEach(tab => {
-                        tab.style.display = 'flex';
-                        tab.classList.remove('active');
-                    });
-                    // Set the active sub-tab
+                    subTabs.forEach(tab => { tab.style.display = 'flex'; tab.classList.remove('active'); });
                     subTabs[subTabIndex].classList.add('active');
                 }
             }
 
-            // --- Scroll Indicator Logic ---
             function updateScrollIndicator() {
-                // Get the height of the menu-items container
                 const menuHeight = menuItemsContainer.clientHeight;
-                
-                // Adjust scrollIndicatorWrapper height: menuHeight + padding for arrows
                 scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
-                
-                // The container for thumb movement is the 'scroll-indicator-bar'
                 const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
-                
                 const thumbHeight = Math.max(20, (thumbTrackHeight / numItems)); 
                 scrollThumb.style.height = `${thumbHeight}px`;
-
                 const maxThumbTravel = thumbTrackHeight - thumbHeight;
                 const scrollPercentage = numItems > 1 ? selectedIndex / (numItems - 1) : 0; 
                 const thumbPosition = scrollPercentage * maxThumbTravel;
-                
                 scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
             }
 
-            // --- Notification Function ---
             function showNotification(message) {
                 const existingNotification = document.querySelector('.notification');
-                if (existingNotification) {
-                    existingNotification.remove();
-                }
+                if (existingNotification) existingNotification.remove();
 
                 const notification = document.createElement('div');
                 notification.className = 'notification';
                 notification.textContent = `Action: ${message}`;
                 document.body.appendChild(notification);
 
-                setTimeout(() => {
-                    notification.classList.add('show');
-                }, 10);
-
+                setTimeout(() => { notification.classList.add('show'); }, 10);
                 setTimeout(() => {
                     notification.classList.remove('show');
                     notification.classList.add('hide');
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 300);
+                    setTimeout(() => { notification.remove(); }, 300);
                 }, 2000);
             }
 
-            // --- Core Selection Logic ---
             function updateSelection() {
                 selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
                 document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
@@ -625,13 +494,8 @@
             function moveSelection() {
                 if (currentDirection !== 0) {
                     selectedIndex = (selectedIndex + currentDirection);
-                    
-                    if (selectedIndex < 0) {
-                        selectedIndex = numItems - 1; 
-                    } else if (selectedIndex >= numItems) {
-                        selectedIndex = 0; 
-                    }
-                    
+                    if (selectedIndex < 0) selectedIndex = numItems - 1; 
+                    else if (selectedIndex >= numItems) selectedIndex = 0; 
                     updateSelection();
                 }
             }
@@ -650,108 +514,76 @@
             }
 
             function setActiveSubTab(tabKey) {
-                // 1. Update currentMenu and subTabIndex
                 currentMenu = tabKey;
                 subTabIndex = subTabs.findIndex(tab => tab.dataset.tabKey === tabKey);
-                
-                // 2. Set active items
                 currentItems = allSubmenuItems[tabKey];
                 numItems = currentItems.length;
                 selectedIndex = 0;
-
-                // 3. Update the main container class for item visibility
-                document.querySelectorAll('.sub-tab-content').forEach(content => {
-                    content.classList.remove('active-tab');
-                });
+                document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
                 document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
-
-                // 4. Update menu bar visuals
                 updateMenuBar();
-                
-                // 5. Update selector position/scrollbar
                 updateSelection();
             }
 
             function switchToSubmenu() {
                 isSubmenuActive = true;
                 menuItemsContainer.classList.add('submenu-active');
-                setActiveSubTab('player'); // Default to 'player' sub-tab on entering submenu
+                setActiveSubTab('player');
             }
 
             function switchToMainMenu() {
                 isSubmenuActive = false;
                 currentMenu = 'main';
                 menuItemsContainer.classList.remove('submenu-active');
-                document.querySelectorAll('.sub-tab-content').forEach(content => {
-                    content.classList.remove('active-tab');
-                });
-
+                document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
                 currentItems = mainMenuItems;
                 numItems = mainMenuItems.length;
-                selectedIndex = 0; // Reset index to 'Player' in main menu
-                
+                selectedIndex = 0;
                 updateMenuBar();
                 updateSelection();
             }
 
-            // --- Tab Switching Logic (Q and E) ---
             function switchSubTab(direction) {
                 if (!isSubmenuActive) return;
-
                 let newIndex = subTabIndex + direction;
-                
-                if (newIndex < 0) {
-                    newIndex = subTabs.length - 1;
-                } else if (newIndex >= subTabs.length) {
-                    newIndex = 0;
-                }
-                
+                if (newIndex < 0) newIndex = subTabs.length - 1;
+                else if (newIndex >= subTabs.length) newIndex = 0;
                 setActiveSubTab(subTabs[newIndex].dataset.tabKey);
             }
 
-
-            // --- Checkbox Toggle Logic ---
+            // --- Updated toggleCheckbox to handle NoClip ---
             function toggleCheckbox(item) {
                 const checkbox = item.querySelector('.checkbox');
-                if (checkbox) {
-                    checkbox.classList.toggle('on');
-                    console.log(`Toggled checkbox for: ${item.dataset.action}`);
-                    showNotification(item.dataset.action); 
-                }
+                if (!checkbox) return;
+                const action = item.dataset.action;
+
+                checkbox.classList.toggle('on'); // Always toggle visually
+                showNotification(action);       // Show action notification
+                console.log(`${action} toggled`);
             }
 
-            // --- Execute Action Logic ---
             function executeAction(action) {
                 console.log(`Executing ${action}`);
                 showNotification(action); 
             }
 
-            // --- Keyboard Controls ---
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
                     let newDirection = (e.key === 'ArrowDown') ? 1 : -1;
-                    if (!e.repeat) {
-                        startRepeat(newDirection);
-                    }
+                    if (!e.repeat) startRepeat(newDirection);
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
                     stopRepeat();
                     const selectedItem = currentItems[selectedIndex];
                     const action = selectedItem.dataset.action;
-                    
-                    if (currentMenu === 'main' && action === 'player') {
-                        switchToSubmenu();
-                    } else if (isSubmenuActive) {
-                        // All sub-tab items
+
+                    if (currentMenu === 'main' && action === 'player') switchToSubmenu();
+                    else if (isSubmenuActive) {
                         if (action.includes('health') || action.includes('armor') || action.includes('model') || action.includes('accessories')) {
                             executeAction(action); 
-                        } else {
-                            toggleCheckbox(selectedItem); 
-                        }
+                        } else toggleCheckbox(selectedItem); 
                     } else {
-                        // Other main menu items
-                        console.log(`Action triggered: ${action}`);
                         showNotification(action); 
                     }
                 } else if (e.key === 'Backspace' && isSubmenuActive) {
@@ -765,12 +597,9 @@
             });
 
             document.addEventListener('keyup', (e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    stopRepeat();
-                }
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') stopRepeat();
             });
 
-            // Initialize
             updateMenuBar();
             updateSelection();
         });
