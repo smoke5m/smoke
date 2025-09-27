@@ -383,10 +383,8 @@
             
             <div class="menu-bar" id="menuBar">
                 <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
-
                 <span class="menu-bar-tab menu-bar-sub-tab" id="playerSubTab" data-tab-key="player">Player</span>
                 <span class="menu-bar-tab menu-bar-sub-tab" id="appearanceSubTab" data-tab-key="appearance">Appearance</span>
-
             </div>
         </div>
         
@@ -500,21 +498,44 @@
     </div>
 
     <script>
+        // DUI Communication Handler
         window.addEventListener('message', (event) => {
             const data = event.data;
             if (!data || !data.type) return;
 
-            console.log("Received message:", data); // Debugging
+            console.log("Received message from DUI:", data);
 
-            // Create proper keyboard event
-            const e = new KeyboardEvent(data.type, {
-                key: data.key || '',
-                keyCode: data.keyCode,
-                bubbles: true
-            });
-
-            document.dispatchEvent(e);
+            // Handle different message types from Lua
+            if (data.type === 'init') {
+                console.log("Menu initialized from DUI");
+            } else if (data.type === 'update') {
+                // Update menu state from Lua
+                if (data.menu && typeof data.index === 'number') {
+                    updateMenuFromDui(data.menu, data.index);
+                }
+            } else if (data.type === 'keydown' || data.type === 'keyup') {
+                // Create proper keyboard event from DUI input
+                const e = new KeyboardEvent(data.type, {
+                    key: data.key || '',
+                    keyCode: data.keyCode,
+                    bubbles: true
+                });
+                document.dispatchEvent(e);
+            }
         });
+
+        // Send message back to DUI/Lua
+        function sendToDui(messageType, data = {}) {
+            const message = {
+                type: messageType,
+                ...data
+            };
+            console.log("Sending to DUI:", message);
+            // This would be handled by the DUI system
+            if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage(message, '*');
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const menuItemsContainer = document.getElementById('menuItems');
@@ -526,18 +547,17 @@
             const playerSubTab = document.getElementById('playerSubTab');
             const appearanceSubTab = document.getElementById('appearanceSubTab');
             const subTabs = [playerSubTab, appearanceSubTab];
-            let subTabIndex = 0; // Index for current active sub-tab (0 for Player, 1 for Appearance)
+            let subTabIndex = 0;
 
             let selectedIndex = 0;
             let scrollInterval = null;
             let currentDirection = 0; 
             let isSubmenuActive = false;
-            let currentMenu = 'main'; // 'main', 'player', or 'appearance'
+            let currentMenu = 'main';
             
             const repeatRate = 120; 
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
             const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
-
 
             const mainMenuItems = document.querySelectorAll('.main-menu .menu-item');
             const playerSubmenuItems = document.querySelectorAll('#playerSubmenu .menu-item');
@@ -551,7 +571,26 @@
             let currentItems = mainMenuItems;
             let numItems = currentItems.length;
 
-            // --- Menu Bar Tab Visibility and Active State ---
+            // Update menu state from DUI messages
+            function updateMenuFromDui(menu, index) {
+                currentMenu = menu;
+                selectedIndex = index;
+                
+                if (menu === 'main') {
+                    if (isSubmenuActive) {
+                        switchToMainMenu();
+                    }
+                } else if (menu === 'player' || menu === 'appearance') {
+                    if (!isSubmenuActive) {
+                        switchToSubmenu();
+                    }
+                    setActiveSubTab(menu);
+                }
+                
+                updateSelection();
+            }
+
+            // Menu Bar Tab Visibility and Active State
             function updateMenuBar() {
                 if (currentMenu === 'main') {
                     mainMenuTab.classList.add('main-active');
@@ -564,22 +603,16 @@
                         tab.style.display = 'flex';
                         tab.classList.remove('active');
                     });
-                    // Set the active sub-tab
                     subTabs[subTabIndex].classList.add('active');
                 }
             }
 
-            // --- Scroll Indicator Logic ---
+            // Scroll Indicator Logic
             function updateScrollIndicator() {
-                // Get the height of the menu-items container
                 const menuHeight = menuItemsContainer.clientHeight;
-                
-                // Adjust scrollIndicatorWrapper height: menuHeight + padding for arrows
                 scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
                 
-                // The container for thumb movement is the 'scroll-indicator-bar'
                 const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
-                
                 const thumbHeight = Math.max(20, (thumbTrackHeight / numItems)); 
                 scrollThumb.style.height = `${thumbHeight}px`;
 
@@ -590,7 +623,7 @@
                 scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
             }
 
-            // --- Notification Function ---
+            // Notification Function
             function showNotification(message) {
                 const existingNotification = document.querySelector('.notification');
                 if (existingNotification) {
@@ -613,13 +646,23 @@
                         notification.remove();
                     }, 300);
                 }, 2000);
+
+                // Send action to DUI
+                sendToDui('action', { action: message });
             }
 
-            // --- Core Selection Logic ---
+            // Core Selection Logic
             function updateSelection() {
                 selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
                 document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
                 updateScrollIndicator(); 
+                
+                // Send selection update to DUI
+                sendToDui('selection', { 
+                    menu: currentMenu, 
+                    index: selectedIndex,
+                    total: numItems 
+                });
             }
 
             function moveSelection() {
@@ -650,32 +693,27 @@
             }
 
             function setActiveSubTab(tabKey) {
-                // 1. Update currentMenu and subTabIndex
                 currentMenu = tabKey;
                 subTabIndex = subTabs.findIndex(tab => tab.dataset.tabKey === tabKey);
                 
-                // 2. Set active items
                 currentItems = allSubmenuItems[tabKey];
                 numItems = currentItems.length;
                 selectedIndex = 0;
 
-                // 3. Update the main container class for item visibility
                 document.querySelectorAll('.sub-tab-content').forEach(content => {
                     content.classList.remove('active-tab');
                 });
                 document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
 
-                // 4. Update menu bar visuals
                 updateMenuBar();
-                
-                // 5. Update selector position/scrollbar
                 updateSelection();
             }
 
             function switchToSubmenu() {
                 isSubmenuActive = true;
                 menuItemsContainer.classList.add('submenu-active');
-                setActiveSubTab('player'); // Default to 'player' sub-tab on entering submenu
+                setActiveSubTab('player');
+                sendToDui('menu_change', { menu: 'submenu', active: true });
             }
 
             function switchToMainMenu() {
@@ -688,13 +726,14 @@
 
                 currentItems = mainMenuItems;
                 numItems = mainMenuItems.length;
-                selectedIndex = 0; // Reset index to 'Player' in main menu
+                selectedIndex = 0;
                 
                 updateMenuBar();
                 updateSelection();
+                sendToDui('menu_change', { menu: 'main', active: false });
             }
 
-            // --- Tab Switching Logic (Q and E) ---
+            // Tab Switching Logic (Q and E)
             function switchSubTab(direction) {
                 if (!isSubmenuActive) return;
 
@@ -709,24 +748,30 @@
                 setActiveSubTab(subTabs[newIndex].dataset.tabKey);
             }
 
-
-            // --- Checkbox Toggle Logic ---
+            // Checkbox Toggle Logic
             function toggleCheckbox(item) {
                 const checkbox = item.querySelector('.checkbox');
                 if (checkbox) {
                     checkbox.classList.toggle('on');
-                    console.log(`Toggled checkbox for: ${item.dataset.action}`);
-                    showNotification(item.dataset.action); 
+                    const isOn = checkbox.classList.contains('on');
+                    console.log(`Toggled checkbox for: ${item.dataset.action} - ${isOn ? 'ON' : 'OFF'}`);
+                    showNotification(`${item.dataset.action} ${isOn ? 'enabled' : 'disabled'}`);
+                    
+                    // Send checkbox state to DUI
+                    sendToDui('checkbox', { 
+                        action: item.dataset.action, 
+                        state: isOn 
+                    });
                 }
             }
 
-            // --- Execute Action Logic ---
+            // Execute Action Logic
             function executeAction(action) {
                 console.log(`Executing ${action}`);
-                showNotification(action); 
+                showNotification(action);
             }
 
-            // --- Keyboard Controls ---
+            // Keyboard Controls
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -743,14 +788,12 @@
                     if (currentMenu === 'main' && action === 'player') {
                         switchToSubmenu();
                     } else if (isSubmenuActive) {
-                        // All sub-tab items
-                        if (action.includes('health') || action.includes('armor') || action.includes('model') || action.includes('accessories')) {
+                        if (action.includes('health') || action.includes('armor') || action.includes('model') || action.includes('accessories') || action.includes('revive')) {
                             executeAction(action); 
                         } else {
                             toggleCheckbox(selectedItem); 
                         }
                     } else {
-                        // Other main menu items
                         console.log(`Action triggered: ${action}`);
                         showNotification(action); 
                     }
@@ -773,6 +816,9 @@
             // Initialize
             updateMenuBar();
             updateSelection();
+            
+            // Send ready signal to DUI
+            sendToDui('ready', { status: 'initialized' });
         });
     </script>
 </body>
