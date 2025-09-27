@@ -33,16 +33,22 @@
             margin: 0;
             height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: flex-start; /* Move horizontally to the left */
+            align-items: center;         /* Keep vertically centered */
             background: transparent; 
             font-family: 'Roboto', sans-serif;
-            flex-direction: column; 
+            flex-direction: column;
+            padding-left: 20px;          /* Optional: Add some space from the very edge */
         }
+
+
 
         /* --- Main Menu Container --- */
         .menu-container {
-            position: relative; /* All children will be positioned relative to this container */
+            position: fixed;
+            top: 50%;
+            left: 100px; /* Moves the menu 100px from the left edge */
+            transform: translateY(-50%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -477,8 +483,8 @@
                 </div>
 
                 <div id="appearanceSubmenu" class="sub-tab-content">
-                    <div class="menu-item" data-action="appearance-model">
-                        <span>Change Model</span>
+                    <div class="menu-item" data-action="randomize-outfit">
+                        <span>Randomize Outfit</span>
                         <span></span>
                     </div>
                     <div class="menu-item" data-action="appearance-hat">
