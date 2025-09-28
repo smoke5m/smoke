@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Corrected Gradient</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -31,6 +31,17 @@
             
             /* The calculated height */
             --visible-content-height: calc(var(--item-height) * 10 + (var(--menu-padding-y) * 2));
+
+            /* --- NOTIFICATION VARIABLES --- */
+            --noti-path-color: #0af; /* Blue path color from user request */
+            --path-thickness: 2px;
+            --cycle-duration: 2s; /* Duration for the path animation */
+            
+            /* NEW: Reduced Notification Size */
+            --noti-width: 250px;
+            --noti-height: 60px;
+            --noti-icon-size: 25px;
+            --noti-padding: 10px;
         }
 
         /* --- Global Setup --- */
@@ -386,33 +397,119 @@
             display: flex;
         }
         
-        /* --- Notification Styles --- */
-        .notification {
+        /* ------------------- NEW NOTIFICATION STYLES ------------------- */
+        .notification-box {
             position: fixed;
-            top: 50%;
+            bottom: 20px; /* Position bottom-right */
             right: 20px;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, var(--color-highlight-pink) 0%, var(--color-highlight-purple) 100%);
-            color: var(--color-text-bright);
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 0 10px rgba(225, 0, 255, 0.7), 
-                        inset 0 0 5px rgba(255, 255, 255, 0.3);
-            font-size: 14px;
-            font-weight: 400;
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            
+            /* Initial visibility state */
+            opacity: 0; 
+            transform: translateX(100%); 
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            
+            /* Box Styling (Reduced Size) */
+            width: var(--noti-width); 
+            height: var(--noti-height); 
+            background-color: #000;
+            border-radius: 5px;
+            color: #fff;
+            padding: var(--noti-padding); 
+            box-sizing: border-box;
+            overflow: hidden;
+            border: 1px solid #111;
             z-index: 1000;
         }
-
-        .notification.show {
+        
+        /* Show/Hide States */
+        .notification-box.show {
             opacity: 1;
-            transform: translateY(-50%) translateX(-10px);
+            transform: translateX(0);
         }
 
-        .notification.hide {
+        .notification-box.hide {
             opacity: 0;
-            transform: translateY(-50%) translateX(10px);
+            transform: translateX(100%);
+        }
+        
+        /* --- Content Styles --- */
+        .content {
+            display: flex; 
+            align-items: center; 
+            gap: 10px; /* Reduced gap */
+            z-index: 2; 
+            position: relative;
+            height: 100%; /* Ensure content fills the box height for centering */
+        }
+        .icon-group {
+            position: relative; 
+            font-size: var(--noti-icon-size); /* Reduced icon size */
+            line-height: 1;
+            color: var(--noti-path-color); 
+            text-shadow: 0 0 5px var(--noti-path-color);
+            margin-right: 5px;
+        }
+        .fa-check-circle { font-size: 0.9em; }
+        .title { 
+            font-size: 1em; /* Reduced font size */
+            font-weight: 500; 
+            line-height: 1.2; 
+        }
+        .message { 
+            font-size: 0.8em; /* Reduced font size */
+            color: #bbb; 
+        }
+
+        /* ------------------- The Animated Path ------------------- */
+
+        /* Shared styles for both path segments */
+        .notification-box::before,
+        .notification-box::after {
+            content: '';
+            position: absolute;
+            background: var(--noti-path-color);
+            box-shadow: 0 0 5px var(--noti-path-color);
+        }
+
+        /* 1. Horizontal Path (Bottom Edge) */
+        .notification-box::before {
+            bottom: 0;
+            left: 0;
+            height: var(--path-thickness);
+            width: 100%;
+            transform-origin: left center;
+        }
+
+        /* 2. Vertical Path (Left Edge) */
+        .notification-box::after {
+            bottom: 0;
+            left: 0;
+            width: var(--path-thickness);
+            height: 100%;
+            transform-origin: bottom center;
+        }
+        
+        /* Apply animations only when the 'show' class is present */
+        .notification-box.show::before {
+            animation: move-h var(--cycle-duration) linear forwards;
+        }
+        .notification-box.show::after {
+            animation: move-v var(--cycle-duration) linear forwards;
+        }
+
+
+        /* --- Keyframe Animations --- */
+
+        /* Horizontal Path: Full -> Disappears Left-to-Right */
+        @keyframes move-h {
+            0% { transform: scaleX(1); }
+            100% { transform: scaleX(0); } 
+        }
+
+        /* Vertical Path: Full -> Disappears Bottom-to-Top */
+        @keyframes move-v {
+            0% { transform: scaleY(1); }
+            100% { transform: scaleY(0); } 
         }
     </style>
 </head>
@@ -597,15 +694,15 @@
             let subTabIndex = 0; 
 
             let selectedIndex = 0;
-            // Removed scrollInterval and currentDirection as they are no longer needed for repeat functionality
             let isSubmenuActive = false;
             let currentMenu = 'main'; 
             
-            // Removed repeatRate
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
             const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
 
             const MAX_VISIBLE_ITEMS = 10;
+            const NOTI_DURATION = 2000; // 2 seconds for visibility
+            const NOTI_TRANSITION = 300; // 0.3 seconds for fade/slide
 
             const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
             const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
@@ -671,29 +768,49 @@
             }
 
 
-            // --- Notification Function ---
-            function showNotification(message) {
-                const existingNotification = document.querySelector('.notification');
+            // --- Notification Function (Updated for new visual style) ---
+            function showNotification(action, title = 'Action Confirmed') {
+                const existingNotification = document.querySelector('.notification-box');
                 if (existingNotification) {
                     existingNotification.remove();
                 }
 
                 const notification = document.createElement('div');
-                notification.className = 'notification';
-                notification.textContent = `Action: ${message}`;
+                notification.className = 'notification-box';
+
+                // Format the action string: 'player-godmode' -> 'Player Godmode'
+                let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ');
+
+                const htmlContent = `
+                    <div class="content">
+                        <div class="icon-group">
+                            <i class="fa-solid fa-check-circle"></i> 
+                        </div>
+                        <div class="text-group">
+                            <div class="title">${title}</div>
+                            <div class="message">${actionMessage}</div>
+                        </div>
+                    </div>
+                `;
+                
+                notification.innerHTML = htmlContent;
                 document.body.appendChild(notification);
 
+                // 1. Show the notification
                 setTimeout(() => {
                     notification.classList.add('show');
                 }, 10);
 
+                // 2. Hide the notification after NOTI_DURATION (2000ms)
                 setTimeout(() => {
                     notification.classList.remove('show');
                     notification.classList.add('hide');
+                    
+                    // 3. Remove the element from DOM after transition completes
                     setTimeout(() => {
                         notification.remove();
-                    }, 300);
-                }, 2000);
+                    }, NOTI_TRANSITION); 
+                }, NOTI_DURATION);
             }
 
             // --- Core Selection Logic ---
@@ -730,8 +847,6 @@
                 
                 updateSelection();
             }
-
-            // Removed startRepeat() and stopRepeat() as they are no longer used.
 
             function setActiveSubTab(tabKey) {
                 currentMenu = tabKey;
@@ -797,13 +912,17 @@
                 const checkbox = item.querySelector('.checkbox');
                 if (checkbox) {
                     checkbox.classList.toggle('on');
-                    showNotification(item.dataset.action); 
+                    const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
+                    
+                    // ONLY CALL showNotification for toggle actions
+                    showNotification(item.dataset.action, state); 
                 }
             }
 
             // --- Execute Action Logic ---
             function executeAction(action) {
-                showNotification(action); 
+                // Not calling showNotification here to keep it quiet for non-toggles
+                // E.g., Revive, Health, Armor, Randomize Outfit, etc.
             }
 
             // --- Keyboard Controls ---
@@ -812,7 +931,6 @@
                     e.preventDefault();
                     let newDirection = (e.key === 'ArrowDown') ? 1 : -1;
                     
-                    // Only process key press once (no repeat)
                     if (!e.repeat) {
                         moveSelection(newDirection); 
                     }
@@ -826,25 +944,25 @@
                     const selectedItem = currentItems[selectedIndex];
                     const action = selectedItem.dataset.action;
                     
-                    if (currentMenu === 'main' && (action === 'player' || action === 'server' || action === 'weapon' || action === 'combat' || action === 'vehicle' || action === 'visual' || action === 'miscellaneous' || action === 'settings')) {
+                    if (currentMenu === 'main') {
+                        // All main menu items are category buttons
                         if (action === 'player') {
                             switchToSubmenu();
                         } else {
-                            executeAction(`Opening ${action} Submenu`);
+                            // Don't notify for submenu opens
                         }
                     } else if (isSubmenuActive) {
+                        // Submenu item action
                         if (selectedItem.querySelector('.checkbox')) {
+                            // This will call showNotification internally
                             toggleCheckbox(selectedItem); 
                         } else {
+                            // Actions like Revive/Randomize Outfit will execute but NOT show a generic notification
                             executeAction(action); 
                         }
-                    } else {
-                        showNotification(action); 
-                    }
+                    } 
                 } else if (e.key === 'Backspace' && isSubmenuActive) {
                     e.preventDefault();
-                    // Optional: You could add if (!e.repeat) return; here too, but Backspace usually
-                    // handles repeat appropriately by the OS. Keeping it simple here.
                     switchToMainMenu(); 
                 } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
                     e.preventDefault();
@@ -860,6 +978,9 @@
             // Initialize
             updateMenuBar();
             updateSelection();
+            
+            // Optional: Remove initial notification, as we only want to show functional toggles.
+            // showNotification('Menu Initialized', 'Shiesty Menu'); 
         });
     </script>
 </body>
