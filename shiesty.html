@@ -57,7 +57,7 @@
         /* --- Main Block for Header and Menu Bar --- */
         .menu-main-block {
             width: var(--menu-width);
-            border-radius: 8px; 
+            border-radius: 4px; 
             overflow: hidden;
         }
 
@@ -65,11 +65,11 @@
         .menu-header-wrapper {
             position: relative;
             height: 100px;
-            background: linear-gradient(135deg, var(--color-highlight-pink) 0%, var(--color-highlight-purple) 100%);
+            background: purple;
             border-bottom-left-radius: 0; 
             border-bottom-right-radius: 0; 
-            border-top-left-radius: 8px; 
-            border-top-right-radius: 8px; 
+            border-top-left-radius: 4px; 
+            border-top-right-radius: 4px; 
         }
 
         .menu-header {
@@ -119,8 +119,9 @@
         .menu-bar-tab.main-active {
             /* Active state for Main Menu tab (only when active) */
             background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
+            border-radius: 11px;
             color: var(--color-text-bright);
-            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border: 0px solid rgba(255, 255, 255, 0.2); 
             border-bottom: none;
         }
         
@@ -388,7 +389,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">Shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
