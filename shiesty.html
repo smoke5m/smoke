@@ -678,36 +678,6 @@
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
-        
-        // --- ADDED: Handle State Update from Lua ---
-        if (data.type === 'update') {
-            const newIndex = data.index;
-            const newMenu = data.menu;
-
-            // Re-map currentItems based on the menu sent from Lua
-            currentMenu = newMenu;
-            currentItems = allSubmenuItems[newMenu] || mainMenuItems;
-            numItems = currentItems.length;
-
-            // Update tab/menu states visually
-            updateMenuBar();
-
-            // Clear previous selection
-            const currentlySelected = document.querySelector('.menu-item.selected');
-            if (currentlySelected) currentlySelected.classList.remove('selected');
-
-            // Set new selection based on Lua's index
-            if (currentItems[newIndex]) {
-                currentItems[newIndex].classList.add('selected');
-            }
-
-            // Update visuals (selector position, scroll, footer) based on Lua's state
-            updateSelection();
-            
-            return;
-        }
-        // --- END ADDED ---
-
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
@@ -732,7 +702,7 @@
         let isSubmenuActive = false;
         let currentMenu = 'main'; 
         
-        // let holdInterval = null; // REMOVED: No longer needed as source of truth
+        // Removed: let holdInterval = null; 
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
@@ -780,34 +750,20 @@
 
         // --- Menu Bar Tab Visibility and Active State ---
         function updateMenuBar() {
-            // Determine if a submenu is currently selected
-            isSubmenuActive = currentMenu !== 'main';
-
             if (currentMenu === 'main') {
                 mainMenuTab.classList.add('main-active');
                 mainMenuTab.style.display = 'flex'; 
                 subTabs.forEach(tab => tab.style.display = 'none');
-                document.querySelector('.menu-items-wrapper').classList.remove('submenu-active');
-                
-                // Ensure correct menu content is visible
-                document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
-            } else {
+                menuItemsContainer.classList.remove('submenu-active');
+            } else if (isSubmenuActive) {
                 mainMenuTab.classList.remove('main-active');
                 mainMenuTab.style.display = 'none'; 
                 subTabs.forEach(tab => {
                     tab.style.display = 'flex'; 
                     tab.classList.remove('active');
                 });
-                
-                // Find and activate the current sub tab
-                const currentTab = Array.from(subTabs).find(tab => tab.dataset.tabKey === currentMenu);
-                if (currentTab) currentTab.classList.add('active');
-
-                document.querySelector('.menu-items-wrapper').classList.add('submenu-active');
-
-                // Ensure correct submenu content is visible
-                document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
-                document.getElementById(`${currentMenu}Submenu`).classList.add('active-tab');
+                subTabs[subTabIndex].classList.add('active');
+                menuItemsContainer.classList.add('submenu-active');
             }
         }
 
@@ -903,8 +859,24 @@
             selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
             
-            // Scroll to keep the item visible (Scroll Management Logic)
-            selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
+            // but we keep this for the scroll indicator logic, which needs scrollTop.
+            
+            // --- SCROLL MANAGEMENT LOGIC for scroll indicator ---
+            // Recalculate scroll for the scroll indicator positioning
+            if (numItems > MAX_VISIBLE_ITEMS) {
+                const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
+                const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
+
+                if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
+                    // This case should primarily be handled by scrollIntoView, 
+                    // but we ensure the container's scroll is correctly set 
+                    // *before* calling updateScrollIndicator if needed.
+                    // For now, we rely on moveSelection's scrollIntoView for the actual scroll position.
+                }
+            } else {
+                menuItemsContainer.scrollTop = 0;
+            }
 
             updateScrollIndicator(); 
         }
@@ -926,8 +898,16 @@
             // Add new highlight
             items[index].classList.add('selected');
         
-            // Move the selector and scroll (via updateSelection call)
-            updateSelection();
+            // Move the selector
+            selector.style.transform = `translateY(${index * itemHeight}px)`;
+        
+            // Scroll into view smoothly
+            items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+            // Update footer text
+            document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
+            
+            updateScrollIndicator(); 
         }
 
         function setActiveSubTab(tabKey) {
@@ -946,6 +926,11 @@
                 currentItems[0].classList.add('selected');
             }
 
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active-tab');
+            });
+            document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
+
             menuItemsContainer.scrollTop = 0; 
             
             updateMenuBar();
@@ -959,7 +944,8 @@
             // Clear main menu selection
             selectedItem.classList.remove('selected');
 
-            currentMenu = 'player';
+            isSubmenuActive = true;
+            menuItemsContainer.classList.add('submenu-active');
             setActiveSubTab('player'); // Default to player submenu
         }
 
@@ -968,7 +954,12 @@
             const currentlySelected = document.querySelector('.menu-item.selected');
             if (currentlySelected) currentlySelected.classList.remove('selected');
 
+            isSubmenuActive = false;
             currentMenu = 'main';
+            menuItemsContainer.classList.remove('submenu-active');
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active-tab');
+            });
 
             currentItems = mainMenuItems;
             numItems = mainMenuItems.length;
@@ -984,7 +975,7 @@
 
         // --- Tab Switching Logic (Q and E) ---
         function switchSubTab(direction) {
-            if (currentMenu === 'main') return;
+            if (!isSubmenuActive) return;
 
             let newIndex = subTabIndex + direction;
             
@@ -1021,14 +1012,13 @@
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 
-                // FIX: Removed the custom continuous scrolling logic (holdInterval).
-                // The HTML only moves the selector once on the initial press.
-                // It relies on the Lua script's 'update' message (which we added a handler for) 
-                // to correctly sync the state after Lua processes the keyup/keydown.
-                if (!e.repeat) {
-                    const direction = e.key === 'ArrowDown' ? 1 : -1;
-                    moveSelection(direction);
-                }
+                // FIX: Block all movement if key is held down (repeated event)
+                if (e.repeat) return; 
+
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+
+                // Move once per keypress, no continuous scrolling timer is started
+                moveSelection(direction);
             } 
             
             else if (e.key === 'Enter') {
@@ -1049,7 +1039,7 @@
                     if (action === 'player') {
                         switchToSubmenu();
                     }
-                } else {
+                } else if (isSubmenuActive) {
                     // Submenu item action
                     if (selectedItem.querySelector('.checkbox')) {
                         // This will call showNotification internally
@@ -1059,10 +1049,10 @@
                         executeAction(action); 
                     }
                 } 
-            } else if (e.key === 'Backspace' && currentMenu !== 'main') {
+            } else if (e.key === 'Backspace' && isSubmenuActive) {
                 e.preventDefault();
                 switchToMainMenu(); 
-            } else if (currentMenu !== 'main' && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+            } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
                 e.preventDefault();
                 
                 // Prevent repeat action when holding Q or E
@@ -1073,8 +1063,7 @@
             }
         });
         
-        // --- REMOVED: Keyup to clear the interval for continuous movement ---
-
+        // Removed the 'keyup' listener that cleared the continuous scrolling timer.
 
         // Initialize
         updateMenuBar();
