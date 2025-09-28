@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -518,7 +518,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">Smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -669,345 +669,355 @@
         </div>
     </div>
 
-    <script>
-        window.addEventListener('message', (event) => {
-            const data = event.data;
-            if (!data || !data.type) return;
-
+<script>
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || !data.type) return;
+        if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
                 keyCode: data.keyCode,
                 bubbles: true
             });
-
             document.dispatchEvent(e);
-        });
+        }
+    });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuItemsContainer = document.getElementById('menuItems');
-            const selector = document.getElementById('selector');
-            const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
-            const scrollIndicatorBar = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar'); 
-            const scrollThumb = document.getElementById('scrollThumb'); 
-            const mainMenuTab = document.getElementById('mainMenuTab');
-            const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
-            let subTabIndex = 0; 
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuItemsContainer = document.getElementById('menuItems');
+        const selector = document.getElementById('selector');
+        const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
+        const scrollIndicatorBar = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar'); 
+        const scrollThumb = document.getElementById('scrollThumb'); 
+        const mainMenuTab = document.getElementById('mainMenuTab');
+        const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
+        let subTabIndex = 0; 
 
-            let selectedIndex = 0;
-            let isSubmenuActive = false;
-            let currentMenu = 'main'; 
-            
-            // 1. ADD VARIABLE TO TRACK INTERVAL
-            let holdInterval = null; 
+        let selectedIndex = 0;
+        let isSubmenuActive = false;
+        let currentMenu = 'main'; 
+        
+        let holdInterval = null; 
 
-            const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
-            const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
+        const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
+        const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
 
-            const MAX_VISIBLE_ITEMS = 10;
-            const NOTI_DURATION = 2000; // 2 seconds for visibility
-            const NOTI_TRANSITION = 300; // 0.3 seconds for fade/slide
+        const MAX_VISIBLE_ITEMS = 10;
+        const NOTI_DURATION = 2000; // 2 seconds for visibility
+        const NOTI_TRANSITION = 300; // 0.3 seconds for fade/slide
 
-            const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
-            const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
-            const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
-            
-            const allSubmenuItems = {
-                'player': playerSubmenuItems,
-                'appearance': appearanceSubmenuItems
+        const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
+        const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
+        const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
+        
+        const allSubmenuItems = {
+            'player': playerSubmenuItems,
+            'appearance': appearanceSubmenuItems
+        };
+
+        let currentItems = mainMenuItems;
+        let numItems = currentItems.length;
+
+        // Function to get current selection info
+        function getCurrentSelectionInfo() {
+            const selectedItem = currentItems[selectedIndex];
+            const action = selectedItem.dataset.action;
+            return {
+                menu: currentMenu,
+                index: selectedIndex,
+                action: action,
+                itemText: selectedItem.querySelector('span').textContent
             };
+        }
 
-            let currentItems = mainMenuItems;
-            let numItems = currentItems.length;
+        // Function to send selection info to Lua
+        function sendSelectionToLua() {
+            const selectionInfo = getCurrentSelectionInfo();
+            // Use console.log to send info that Lua can capture
+            console.log(`MENU_SELECTION:${JSON.stringify(selectionInfo)}`);
+        }
 
-
-            // --- Menu Bar Tab Visibility and Active State ---
-            function updateMenuBar() {
-                if (currentMenu === 'main') {
-                    mainMenuTab.classList.add('main-active');
-                    mainMenuTab.style.display = 'flex'; 
-                    subTabs.forEach(tab => tab.style.display = 'none');
-                    menuItemsContainer.classList.remove('submenu-active');
-                } else if (isSubmenuActive) {
-                    mainMenuTab.classList.remove('main-active');
-                    mainMenuTab.style.display = 'none'; 
-                    subTabs.forEach(tab => {
-                        tab.style.display = 'flex'; 
-                        tab.classList.remove('active');
-                    });
-                    subTabs[subTabIndex].classList.add('active');
-                    menuItemsContainer.classList.add('submenu-active');
-                }
-            }
-
-            // --- Scroll Indicator Logic ---
-            function updateScrollIndicator() {
-                const menuHeight = menuItemsContainer.clientHeight;
-                scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
-
-                const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
-                
-                const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
-                const totalContentHeight = numItems * itemHeight;
-                
-                // If there are less than MAX_VISIBLE_ITEMS, set thumb to full height
-                let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
-                    ? thumbTrackHeight
-                    : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight); 
-                
-                scrollThumb.style.height = `${thumbHeight}px`;
-
-                const maxThumbTravel = thumbTrackHeight - thumbHeight;
-                
-                let scrollPercentage = 0;
-                if (numItems > MAX_VISIBLE_ITEMS) {
-                    const maxScrollTop = totalContentHeight - visibleHeight;
-                    if (maxScrollTop > 0) {
-                        scrollPercentage = menuItemsContainer.scrollTop / maxScrollTop;
-                    }
-                }
-                
-                const thumbPosition = scrollPercentage * maxThumbTravel;
-                scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
-            }
-
-
-            // --- Notification Function (Updated for new visual style) ---
-            function showNotification(action, title = 'Action Confirmed') {
-                const existingNotification = document.querySelector('.notification-box');
-                if (existingNotification) {
-                    existingNotification.remove();
-                }
-
-                const notification = document.createElement('div');
-                notification.className = 'notification-box';
-
-                // Format the action string: 'player-godmode' -> 'Player Godmode'
-                let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ');
-
-                const htmlContent = `
-                    <div class="content">
-                        <div class="icon-group">
-                            <i class="fa-solid fa-check-circle"></i> 
-                        </div>
-                        <div class="text-group">
-                            <div class="title">${title}</div>
-                            <div class="message">${actionMessage}</div>
-                        </div>
-                    </div>
-                `;
-                
-                notification.innerHTML = htmlContent;
-                document.body.appendChild(notification);
-
-                // 1. Show the notification
-                setTimeout(() => {
-                    notification.classList.add('show');
-                }, 10);
-
-                // 2. Hide the notification after NOTI_DURATION (2000ms)
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                    notification.classList.add('hide');
-                    
-                    // 3. Remove the element from DOM after transition completes
-                    setTimeout(() => {
-                        notification.remove();
-                    }, NOTI_TRANSITION); 
-                }, NOTI_DURATION);
-            }
-
-            // --- Core Selection Logic ---
-            function updateSelection() {
-                selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
-                document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
-                
-                // --- SCROLL MANAGEMENT LOGIC (The core of the 10-item display) ---
-                if (numItems > MAX_VISIBLE_ITEMS) {
-                    const topVisibleIndex = menuItemsContainer.scrollTop / itemHeight;
-                    const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
-
-                    if (selectedIndex < topVisibleIndex) {
-                        menuItemsContainer.scrollTop = selectedIndex * itemHeight;
-                    } else if (selectedIndex > bottomVisibleIndex) {
-                        menuItemsContainer.scrollTop = (selectedIndex - MAX_VISIBLE_ITEMS + 1) * itemHeight;
-                    }
-                } else {
-                    menuItemsContainer.scrollTop = 0;
-                }
-
-                updateScrollIndicator(); 
-            }
-
-            // This is the function responsible for moving the selection one step
-            function moveSelection(direction) {
-                selectedIndex = (selectedIndex + direction);
-                
-                if (selectedIndex < 0) {
-                    selectedIndex = numItems - 1; 
-                } else if (selectedIndex >= numItems) {
-                    selectedIndex = 0; 
-                }
-                
-                updateSelection();
-            }
-
-            function setActiveSubTab(tabKey) {
-                currentMenu = tabKey;
-                subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
-                
-                currentItems = allSubmenuItems[tabKey];
-                numItems = currentItems.length;
-                selectedIndex = 0;
-                
-                document.querySelectorAll('.sub-tab-content').forEach(content => {
-                    content.classList.remove('active-tab');
-                });
-                document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
-
-                menuItemsContainer.scrollTop = 0; 
-                
-                updateMenuBar();
-                updateSelection();
-            }
-
-            function switchToSubmenu() {
-                isSubmenuActive = true;
-                menuItemsContainer.classList.add('submenu-active');
-                setActiveSubTab('player'); // Default to player submenu
-            }
-
-            function switchToMainMenu() {
-                isSubmenuActive = false;
-                currentMenu = 'main';
+        // --- Menu Bar Tab Visibility and Active State ---
+        function updateMenuBar() {
+            if (currentMenu === 'main') {
+                mainMenuTab.classList.add('main-active');
+                mainMenuTab.style.display = 'flex'; 
+                subTabs.forEach(tab => tab.style.display = 'none');
                 menuItemsContainer.classList.remove('submenu-active');
-                document.querySelectorAll('.sub-tab-content').forEach(content => {
-                    content.classList.remove('active-tab');
+            } else if (isSubmenuActive) {
+                mainMenuTab.classList.remove('main-active');
+                mainMenuTab.style.display = 'none'; 
+                subTabs.forEach(tab => {
+                    tab.style.display = 'flex'; 
+                    tab.classList.remove('active');
                 });
-
-                currentItems = mainMenuItems;
-                numItems = mainMenuItems.length;
-                selectedIndex = 0; 
-
-                menuItemsContainer.scrollTop = 0; 
-                
-                updateMenuBar();
-                updateSelection();
+                subTabs[subTabIndex].classList.add('active');
+                menuItemsContainer.classList.add('submenu-active');
             }
+        }
 
-            // --- Tab Switching Logic (Q and E) ---
-            function switchSubTab(direction) {
-                if (!isSubmenuActive) return;
+        // --- Scroll Indicator Logic ---
+        function updateScrollIndicator() {
+            const menuHeight = menuItemsContainer.clientHeight;
+            scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
 
-                let newIndex = subTabIndex + direction;
-                
-                if (newIndex < 0) {
-                    newIndex = subTabs.length - 1;
-                } else if (newIndex >= subTabs.length) {
-                    newIndex = 0;
-                }
-                
-                setActiveSubTab(subTabs[newIndex].dataset.tabKey);
-            }
-
-
-            // --- Checkbox Toggle Logic ---
-            function toggleCheckbox(item) {
-                const checkbox = item.querySelector('.checkbox');
-                if (checkbox) {
-                    checkbox.classList.toggle('on');
-                    const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
-                    
-                    // ONLY CALL showNotification for toggle actions
-                    showNotification(item.dataset.action, state); 
-                }
-            }
-
-            // --- Execute Action Logic ---
-            function executeAction(action) {
-                // Not calling showNotification here to keep it quiet for non-toggles
-                // E.g., Revive, Health, Armor, Randomize Outfit, etc.
-            }
-
-            // --- Keyboard Controls ---
-            document.addEventListener('keydown', (e) => {
-                // 2. REPLACE ARROW KEY KEYDOWN LOGIC
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    
-                    // If already holding, do nothing
-                    if (holdInterval) return;
-
-                    const direction = e.key === 'ArrowDown' ? 1 : -1;
-
-                    // Move once immediately
-                    moveSelection(direction);
-                    // Notify Lua of the immediate movement (first step)
-                    window.postMessage({ type: 'navigate', direction: direction });
-                    
-                    // Start interval to keep moving while key is held
-                    holdInterval = setInterval(() => {
-                        moveSelection(direction);
-                        // Notify Lua of the movement
-                        window.postMessage({ type: 'navigate', direction: direction });
-                    }, 100); // 100ms per step
-                } 
-                
-                else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    
-                    // Prevent repeat action when holding Enter
-                    if (e.repeat) return; 
-                    
-                    const selectedItem = currentItems[selectedIndex];
-                    const action = selectedItem.dataset.action;
-                    
-                    if (currentMenu === 'main') {
-                        // All main menu items are category buttons
-                        if (action === 'player') {
-                            switchToSubmenu();
-                        } else {
-                            // Don't notify for submenu opens
-                        }
-                    } else if (isSubmenuActive) {
-                        // Submenu item action
-                        if (selectedItem.querySelector('.checkbox')) {
-                            // This will call showNotification internally
-                            toggleCheckbox(selectedItem); 
-                        } else {
-                            // Actions like Revive/Randomize Outfit will execute but NOT show a generic notification
-                            executeAction(action); 
-                        }
-                    } 
-                } else if (e.key === 'Backspace' && isSubmenuActive) {
-                    e.preventDefault();
-                    switchToMainMenu(); 
-                } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
-                    e.preventDefault();
-                    
-                    // Prevent repeat action when holding Q or E
-                    if (e.repeat) return; 
-                    
-                    const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
-                    switchSubTab(direction);
-                }
-            });
+            const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
             
-            // 3. ADD KEYUP TO CLEAR THE INTERVAL
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    clearInterval(holdInterval);
-                    holdInterval = null;
+            const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
+            const totalContentHeight = numItems * itemHeight;
+            
+            // If there are less than MAX_VISIBLE_ITEMS, set thumb to full height
+            let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
+                ? thumbTrackHeight
+                : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight); 
+            
+            scrollThumb.style.height = `${thumbHeight}px`;
+
+            const maxThumbTravel = thumbTrackHeight - thumbHeight;
+            
+            let scrollPercentage = 0;
+            if (numItems > MAX_VISIBLE_ITEMS) {
+                const maxScrollTop = totalContentHeight - visibleHeight;
+                if (maxScrollTop > 0) {
+                    scrollPercentage = menuItemsContainer.scrollTop / maxScrollTop;
                 }
+            }
+            
+            const thumbPosition = scrollPercentage * maxThumbTravel;
+            scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
+        }
+
+
+        // --- Notification Function (Updated for new visual style) ---
+        function showNotification(action, title = 'Action Confirmed') {
+            const existingNotification = document.querySelector('.notification-box');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = 'notification-box';
+
+            // Format the action string: 'player-godmode' -> 'Player Godmode'
+            let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ');
+
+            const htmlContent = `
+                <div class="content">
+                    <div class="icon-group">
+                        <i class="fa-solid fa-check-circle"></i> 
+                    </div>
+                    <div class="text-group">
+                        <div class="title">${title}</div>
+                        <div class="message">${actionMessage}</div>
+                    </div>
+                </div>
+            `;
+            
+            notification.innerHTML = htmlContent;
+            document.body.appendChild(notification);
+
+            // 1. Show the notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            // 2. Hide the notification after NOTI_DURATION (2000ms)
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.classList.add('hide');
+                
+                // 3. Remove the element from DOM after transition completes
+                setTimeout(() => {
+                    notification.remove();
+                }, NOTI_TRANSITION); 
+            }, NOTI_DURATION);
+        }
+
+        // --- Core Selection Logic ---
+        function updateSelection() {
+            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
+            
+            // --- SCROLL MANAGEMENT LOGIC (The core of the 10-item display) ---
+            if (numItems > MAX_VISIBLE_ITEMS) {
+                const topVisibleIndex = menuItemsContainer.scrollTop / itemHeight;
+                const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
+
+                if (selectedIndex < topVisibleIndex) {
+                    menuItemsContainer.scrollTop = selectedIndex * itemHeight;
+                } else if (selectedIndex > bottomVisibleIndex) {
+                    menuItemsContainer.scrollTop = (selectedIndex - MAX_VISIBLE_ITEMS + 1) * itemHeight;
+                }
+            } else {
+                menuItemsContainer.scrollTop = 0;
+            }
+
+            updateScrollIndicator(); 
+        }
+
+        // This is the function responsible for moving the selection one step
+        function moveSelection(direction) {
+            selectedIndex = (selectedIndex + direction);
+            
+            if (selectedIndex < 0) {
+                selectedIndex = numItems - 1; 
+            } else if (selectedIndex >= numItems) {
+                selectedIndex = 0; 
+            }
+            
+            updateSelection();
+        }
+
+        function setActiveSubTab(tabKey) {
+            currentMenu = tabKey;
+            subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
+            
+            currentItems = allSubmenuItems[tabKey];
+            numItems = currentItems.length;
+            selectedIndex = 0;
+            
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active-tab');
             });
+            document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
 
-
-            // Initialize
+            menuItemsContainer.scrollTop = 0; 
+            
             updateMenuBar();
             updateSelection();
+        }
+
+        function switchToSubmenu() {
+            isSubmenuActive = true;
+            menuItemsContainer.classList.add('submenu-active');
+            setActiveSubTab('player'); // Default to player submenu
+        }
+
+        function switchToMainMenu() {
+            isSubmenuActive = false;
+            currentMenu = 'main';
+            menuItemsContainer.classList.remove('submenu-active');
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active-tab');
+            });
+
+            currentItems = mainMenuItems;
+            numItems = mainMenuItems.length;
+            selectedIndex = 0; 
+
+            menuItemsContainer.scrollTop = 0; 
             
-            // Optional: Remove initial notification, as we only want to show functional toggles.
-            // showNotification('Menu Initialized', 'Smoke Menu'); 
+            updateMenuBar();
+            updateSelection();
+        }
+
+        // --- Tab Switching Logic (Q and E) ---
+        function switchSubTab(direction) {
+            if (!isSubmenuActive) return;
+
+            let newIndex = subTabIndex + direction;
+            
+            if (newIndex < 0) {
+                newIndex = subTabs.length - 1;
+            } else if (newIndex >= subTabs.length) {
+                newIndex = 0;
+            }
+            
+            setActiveSubTab(subTabs[newIndex].dataset.tabKey);
+        }
+
+
+        // --- Checkbox Toggle Logic ---
+        function toggleCheckbox(item) {
+            const checkbox = item.querySelector('.checkbox');
+            if (checkbox) {
+                checkbox.classList.toggle('on');
+                const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
+                
+                // ONLY CALL showNotification for toggle actions
+                showNotification(item.dataset.action, state); 
+            }
+        }
+
+        // --- Execute Action Logic ---
+        function executeAction(action) {
+            // Non-toggle actions
+        }
+
+        // --- Keyboard Controls ---
+        document.addEventListener('keydown', (e) => {
+            // Arrow key navigation without postMessage
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                
+                // If already holding, do nothing
+                if (holdInterval) return;
+
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+
+                // Move once immediately
+                moveSelection(direction);
+                
+                // Start interval to keep moving while key is held
+                holdInterval = setInterval(() => {
+                    moveSelection(direction);
+                }, 100); // 100ms per step
+            } 
+            
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                // Prevent repeat action when holding Enter
+                if (e.repeat) return; 
+                
+                const selectedItem = currentItems[selectedIndex];
+                const action = selectedItem.dataset.action;
+                
+                // Send current selection to Lua before processing
+                sendSelectionToLua();
+                
+                if (currentMenu === 'main') {
+                    // All main menu items are category buttons
+                    if (action === 'player') {
+                        switchToSubmenu();
+                    }
+                } else if (isSubmenuActive) {
+                    // Submenu item action
+                    if (selectedItem.querySelector('.checkbox')) {
+                        // This will call showNotification internally
+                        toggleCheckbox(selectedItem); 
+                    } else {
+                        // Actions like Revive/Randomize Outfit will execute but NOT show a generic notification
+                        executeAction(action); 
+                    }
+                } 
+            } else if (e.key === 'Backspace' && isSubmenuActive) {
+                e.preventDefault();
+                switchToMainMenu(); 
+            } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+                e.preventDefault();
+                
+                // Prevent repeat action when holding Q or E
+                if (e.repeat) return; 
+                
+                const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
+                switchSubTab(direction);
+            }
         });
-    </script>
+        
+        // Keyup to clear the interval for continuous movement
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                clearInterval(holdInterval);
+                holdInterval = null;
+            }
+        });
+
+
+        // Initialize
+        updateMenuBar();
+        updateSelection();
+    });
+</script>
 </body>
 </html>
