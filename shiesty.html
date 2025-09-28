@@ -941,9 +941,15 @@
 
                     // Move once immediately
                     moveSelection(direction);
-
+                    // Notify Lua of the immediate movement (first step)
+                    window.postMessage({ type: 'navigate', direction: direction });
+                    
                     // Start interval to keep moving while key is held
-                    holdInterval = setInterval(() => moveSelection(direction), 100); // 100ms per step
+                    holdInterval = setInterval(() => {
+                        moveSelection(direction);
+                        // Notify Lua of the movement
+                        window.postMessage({ type: 'navigate', direction: direction });
+                    }, 100); // 100ms per step
                 } 
                 
                 else if (e.key === 'Enter') {
