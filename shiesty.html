@@ -697,6 +697,9 @@
             let isSubmenuActive = false;
             let currentMenu = 'main'; 
             
+            // 1. ADD VARIABLE TO TRACK INTERVAL
+            let holdInterval = null; 
+
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
             const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
 
@@ -927,15 +930,23 @@
 
             // --- Keyboard Controls ---
             document.addEventListener('keydown', (e) => {
+                // 2. REPLACE ARROW KEY KEYDOWN LOGIC
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
-                    let newDirection = (e.key === 'ArrowDown') ? 1 : -1;
                     
-                    if (!e.repeat) {
-                        moveSelection(newDirection); 
-                    }
-                    
-                } else if (e.key === 'Enter') {
+                    // If already holding, do nothing
+                    if (holdInterval) return;
+
+                    const direction = e.key === 'ArrowDown' ? 1 : -1;
+
+                    // Move once immediately
+                    moveSelection(direction);
+
+                    // Start interval to keep moving while key is held
+                    holdInterval = setInterval(() => moveSelection(direction), 100); // 100ms per step
+                } 
+                
+                else if (e.key === 'Enter') {
                     e.preventDefault();
                     
                     // Prevent repeat action when holding Enter
@@ -974,6 +985,15 @@
                     switchSubTab(direction);
                 }
             });
+            
+            // 3. ADD KEYUP TO CLEAR THE INTERVAL
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    clearInterval(holdInterval);
+                    holdInterval = null;
+                }
+            });
+
 
             // Initialize
             updateMenuBar();
