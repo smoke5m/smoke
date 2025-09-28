@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -129,7 +129,7 @@
             transition: all 0.2s ease;
         }
 
-        /* Submenu tabs that expand when Main Menu is hidden */
+        /* Submenu tabs that fill the space when Main Menu is hidden */
         .menu-bar-sub-tab {
              /* Sub-tabs fill the space when they are visible */
             flex: 1; 
@@ -518,7 +518,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">Smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -671,17 +671,24 @@
 
     <script>
         window.addEventListener('message', (event) => {
-            const data = event.data;
-            if (!data || !data.type) return;
+    const data = event.data;
+    if (!data || !data.type) return;
 
-            const e = new KeyboardEvent(data.type, {
-                key: data.key || '',
-                keyCode: data.keyCode,
-                bubbles: true
-            });
-
-            document.dispatchEvent(e);
+    if (data.type === "update") {
+        // Lua sends an update message with the current menu and index
+        selectedIndex = data.index;      // Update what item is highlighted
+        currentMenu = data.menu;         // Update which menu we're in
+        updateSelection();               // Move the selector visually
+    } else {
+        // Handle normal keydown/keyup events
+        const e = new KeyboardEvent(data.type, {
+            key: data.key || '',
+            keyCode: data.keyCode,
+            bubbles: true
         });
+        document.dispatchEvent(e);
+    }
+});
 
         document.addEventListener('DOMContentLoaded', () => {
             const menuItemsContainer = document.getElementById('menuItems');
@@ -998,7 +1005,7 @@ holdInterval = setInterval(() => {
             updateSelection();
             
             // Optional: Remove initial notification, as we only want to show functional toggles.
-            // showNotification('Menu Initialized', 'Smoke Menu'); 
+            // showNotification('Menu Initialized', 'shiesty Menu'); 
         });
     </script>
 </body>
