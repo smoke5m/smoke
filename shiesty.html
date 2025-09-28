@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -523,7 +523,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -678,6 +678,36 @@
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
+        
+        // --- ADDED: Handle State Update from Lua ---
+        if (data.type === 'update') {
+            const newIndex = data.index;
+            const newMenu = data.menu;
+
+            // Re-map currentItems based on the menu sent from Lua
+            currentMenu = newMenu;
+            currentItems = allSubmenuItems[newMenu] || mainMenuItems;
+            numItems = currentItems.length;
+
+            // Update tab/menu states visually
+            updateMenuBar();
+
+            // Clear previous selection
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+
+            // Set new selection based on Lua's index
+            if (currentItems[newIndex]) {
+                currentItems[newIndex].classList.add('selected');
+            }
+
+            // Update visuals (selector position, scroll, footer) based on Lua's state
+            updateSelection();
+            
+            return;
+        }
+        // --- END ADDED ---
+
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
@@ -702,7 +732,7 @@
         let isSubmenuActive = false;
         let currentMenu = 'main'; 
         
-        let holdInterval = null; 
+        // let holdInterval = null; // REMOVED: No longer needed as source of truth
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
@@ -750,20 +780,34 @@
 
         // --- Menu Bar Tab Visibility and Active State ---
         function updateMenuBar() {
+            // Determine if a submenu is currently selected
+            isSubmenuActive = currentMenu !== 'main';
+
             if (currentMenu === 'main') {
                 mainMenuTab.classList.add('main-active');
                 mainMenuTab.style.display = 'flex'; 
                 subTabs.forEach(tab => tab.style.display = 'none');
-                menuItemsContainer.classList.remove('submenu-active');
-            } else if (isSubmenuActive) {
+                document.querySelector('.menu-items-wrapper').classList.remove('submenu-active');
+                
+                // Ensure correct menu content is visible
+                document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
+            } else {
                 mainMenuTab.classList.remove('main-active');
                 mainMenuTab.style.display = 'none'; 
                 subTabs.forEach(tab => {
                     tab.style.display = 'flex'; 
                     tab.classList.remove('active');
                 });
-                subTabs[subTabIndex].classList.add('active');
-                menuItemsContainer.classList.add('submenu-active');
+                
+                // Find and activate the current sub tab
+                const currentTab = Array.from(subTabs).find(tab => tab.dataset.tabKey === currentMenu);
+                if (currentTab) currentTab.classList.add('active');
+
+                document.querySelector('.menu-items-wrapper').classList.add('submenu-active');
+
+                // Ensure correct submenu content is visible
+                document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
+                document.getElementById(`${currentMenu}Submenu`).classList.add('active-tab');
             }
         }
 
@@ -859,24 +903,8 @@
             selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
             
-            // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
-            // but we keep this for the scroll indicator logic, which needs scrollTop.
-            
-            // --- SCROLL MANAGEMENT LOGIC for scroll indicator ---
-            // Recalculate scroll for the scroll indicator positioning
-            if (numItems > MAX_VISIBLE_ITEMS) {
-                const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
-                const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
-
-                if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
-                    // This case should primarily be handled by scrollIntoView, 
-                    // but we ensure the container's scroll is correctly set 
-                    // *before* calling updateScrollIndicator if needed.
-                    // For now, we rely on moveSelection's scrollIntoView for the actual scroll position.
-                }
-            } else {
-                menuItemsContainer.scrollTop = 0;
-            }
+            // Scroll to keep the item visible (Scroll Management Logic)
+            selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             updateScrollIndicator(); 
         }
@@ -898,16 +926,8 @@
             // Add new highlight
             items[index].classList.add('selected');
         
-            // Move the selector
-            selector.style.transform = `translateY(${index * itemHeight}px)`;
-        
-            // Scroll into view smoothly
-            items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-            // Update footer text
-            document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
-            
-            updateScrollIndicator(); 
+            // Move the selector and scroll (via updateSelection call)
+            updateSelection();
         }
 
         function setActiveSubTab(tabKey) {
@@ -926,11 +946,6 @@
                 currentItems[0].classList.add('selected');
             }
 
-            document.querySelectorAll('.sub-tab-content').forEach(content => {
-                content.classList.remove('active-tab');
-            });
-            document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
-
             menuItemsContainer.scrollTop = 0; 
             
             updateMenuBar();
@@ -944,8 +959,7 @@
             // Clear main menu selection
             selectedItem.classList.remove('selected');
 
-            isSubmenuActive = true;
-            menuItemsContainer.classList.add('submenu-active');
+            currentMenu = 'player';
             setActiveSubTab('player'); // Default to player submenu
         }
 
@@ -954,12 +968,7 @@
             const currentlySelected = document.querySelector('.menu-item.selected');
             if (currentlySelected) currentlySelected.classList.remove('selected');
 
-            isSubmenuActive = false;
             currentMenu = 'main';
-            menuItemsContainer.classList.remove('submenu-active');
-            document.querySelectorAll('.sub-tab-content').forEach(content => {
-                content.classList.remove('active-tab');
-            });
 
             currentItems = mainMenuItems;
             numItems = mainMenuItems.length;
@@ -975,7 +984,7 @@
 
         // --- Tab Switching Logic (Q and E) ---
         function switchSubTab(direction) {
-            if (!isSubmenuActive) return;
+            if (currentMenu === 'main') return;
 
             let newIndex = subTabIndex + direction;
             
@@ -1012,18 +1021,14 @@
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 
-                // If already holding, do nothing
-                if (holdInterval) return;
-
-                const direction = e.key === 'ArrowDown' ? 1 : -1;
-
-                // Move once immediately
-                moveSelection(direction);
-                
-                // Start interval to keep moving while key is held
-                holdInterval = setInterval(() => {
+                // FIX: Removed the custom continuous scrolling logic (holdInterval).
+                // The HTML only moves the selector once on the initial press.
+                // It relies on the Lua script's 'update' message (which we added a handler for) 
+                // to correctly sync the state after Lua processes the keyup/keydown.
+                if (!e.repeat) {
+                    const direction = e.key === 'ArrowDown' ? 1 : -1;
                     moveSelection(direction);
-                }, 100); // 100ms per step
+                }
             } 
             
             else if (e.key === 'Enter') {
@@ -1044,7 +1049,7 @@
                     if (action === 'player') {
                         switchToSubmenu();
                     }
-                } else if (isSubmenuActive) {
+                } else {
                     // Submenu item action
                     if (selectedItem.querySelector('.checkbox')) {
                         // This will call showNotification internally
@@ -1054,10 +1059,10 @@
                         executeAction(action); 
                     }
                 } 
-            } else if (e.key === 'Backspace' && isSubmenuActive) {
+            } else if (e.key === 'Backspace' && currentMenu !== 'main') {
                 e.preventDefault();
                 switchToMainMenu(); 
-            } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+            } else if (currentMenu !== 'main' && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
                 e.preventDefault();
                 
                 // Prevent repeat action when holding Q or E
@@ -1068,13 +1073,7 @@
             }
         });
         
-        // Keyup to clear the interval for continuous movement
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                clearInterval(holdInterval);
-                holdInterval = null;
-            }
-        });
+        // --- REMOVED: Keyup to clear the interval for continuous movement ---
 
 
         // Initialize
