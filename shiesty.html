@@ -39,11 +39,11 @@
             height: 100vh;
             display: flex;
             justify-content: flex-start; 
-            align-items: center;         
+            align-items: center;          
             background: transparent; 
             font-family: 'Roboto', sans-serif;
             flex-direction: column;
-            padding-left: 20px;          
+            padding-left: 20px;            
         }
 
         /* --- Main Menu Container --- */
@@ -597,12 +597,11 @@
             let subTabIndex = 0; 
 
             let selectedIndex = 0;
-            let scrollInterval = null;
-            let currentDirection = 0; 
+            // Removed scrollInterval and currentDirection as they are no longer needed for repeat functionality
             let isSubmenuActive = false;
             let currentMenu = 'main'; 
             
-            const repeatRate = 120; 
+            // Removed repeatRate
             const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
             const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
 
@@ -618,7 +617,7 @@
             };
 
             let currentItems = mainMenuItems;
-            let numItems = currentItems.length; // Correctly initialize numItems
+            let numItems = currentItems.length;
 
 
             // --- Menu Bar Tab Visibility and Active State ---
@@ -640,7 +639,7 @@
                 }
             }
 
-            // --- Scroll Indicator Logic (FIXED to use scrollTop) ---
+            // --- Scroll Indicator Logic ---
             function updateScrollIndicator() {
                 const menuHeight = menuItemsContainer.clientHeight;
                 scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
@@ -719,38 +718,25 @@
                 updateScrollIndicator(); 
             }
 
-            function moveSelection() {
-                if (currentDirection !== 0) {
-                    selectedIndex = (selectedIndex + currentDirection);
-                    
-                    if (selectedIndex < 0) {
-                        selectedIndex = numItems - 1; 
-                    } else if (selectedIndex >= numItems) {
-                        selectedIndex = 0; 
-                    }
-                    
-                    updateSelection();
+            // This is the function responsible for moving the selection one step
+            function moveSelection(direction) {
+                selectedIndex = (selectedIndex + direction);
+                
+                if (selectedIndex < 0) {
+                    selectedIndex = numItems - 1; 
+                } else if (selectedIndex >= numItems) {
+                    selectedIndex = 0; 
                 }
+                
+                updateSelection();
             }
 
-            function startRepeat(newDirection) {
-                if (scrollInterval) stopRepeat();
-                currentDirection = newDirection;
-                moveSelection();
-                scrollInterval = setInterval(moveSelection, repeatRate);
-            }
-
-            function stopRepeat() {
-                clearInterval(scrollInterval);
-                scrollInterval = null;
-                currentDirection = 0;
-            }
+            // Removed startRepeat() and stopRepeat() as they are no longer used.
 
             function setActiveSubTab(tabKey) {
                 currentMenu = tabKey;
                 subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
                 
-                // FIX: Update currentItems and numItems based on the active sub-tab
                 currentItems = allSubmenuItems[tabKey];
                 numItems = currentItems.length;
                 selectedIndex = 0;
@@ -760,7 +746,6 @@
                 });
                 document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
 
-                // Crucial: Reset scroll to prevent incorrect thumb position before update
                 menuItemsContainer.scrollTop = 0; 
                 
                 updateMenuBar();
@@ -781,12 +766,10 @@
                     content.classList.remove('active-tab');
                 });
 
-                // FIX: Update currentItems and numItems for the main menu
                 currentItems = mainMenuItems;
                 numItems = mainMenuItems.length;
                 selectedIndex = 0; 
 
-                // Crucial: Reset scroll
                 menuItemsContainer.scrollTop = 0; 
                 
                 updateMenuBar();
@@ -828,12 +811,18 @@
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
                     let newDirection = (e.key === 'ArrowDown') ? 1 : -1;
+                    
+                    // Only process key press once (no repeat)
                     if (!e.repeat) {
-                        startRepeat(newDirection);
+                        moveSelection(newDirection); 
                     }
+                    
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    stopRepeat();
+                    
+                    // Prevent repeat action when holding Enter
+                    if (e.repeat) return; 
+                    
                     const selectedItem = currentItems[selectedIndex];
                     const action = selectedItem.dataset.action;
                     
@@ -854,17 +843,17 @@
                     }
                 } else if (e.key === 'Backspace' && isSubmenuActive) {
                     e.preventDefault();
+                    // Optional: You could add if (!e.repeat) return; here too, but Backspace usually
+                    // handles repeat appropriately by the OS. Keeping it simple here.
                     switchToMainMenu(); 
                 } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
                     e.preventDefault();
+                    
+                    // Prevent repeat action when holding Q or E
+                    if (e.repeat) return; 
+                    
                     const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
                     switchSubTab(direction);
-                }
-            });
-
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    stopRepeat();
                 }
             });
 
