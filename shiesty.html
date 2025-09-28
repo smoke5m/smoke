@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -210,11 +210,11 @@
             font-size: 0.7em; 
         }
         
-        .menu-item:hover {
+        /* .menu-item:hover {
             box-shadow: 
                 inset 0 0 5px rgba(225, 0, 255, 0.4),
                 0 0 3px rgba(225, 0, 255, 0.5); 
-        }
+        } */
 
         .selector {
             position: absolute;
@@ -511,6 +511,11 @@
             0% { transform: scaleY(1); }
             100% { transform: scaleY(0); } 
         }
+        
+        /* --- NEW .selected STYLES --- */
+        .menu-item.selected {
+            /* no visual styles here */
+        }
     </style>
 </head>
 <body>
@@ -518,7 +523,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -693,7 +698,7 @@
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
         let subTabIndex = 0; 
 
-        let selectedIndex = 0;
+        // let selectedIndex = 0; // REMOVED: No longer needed as source of truth
         let isSubmenuActive = false;
         let currentMenu = 'main'; 
         
@@ -716,15 +721,19 @@
         };
 
         let currentItems = mainMenuItems;
+        currentItems[0].classList.add('selected'); // first item selected at start
         let numItems = currentItems.length;
 
         // Function to get current selection info
         function getCurrentSelectionInfo() {
-            const selectedItem = currentItems[selectedIndex];
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem) return null;
             const action = selectedItem.dataset.action;
+            const index = Array.from(currentItems).indexOf(selectedItem);
+            
             return {
                 menu: currentMenu,
-                index: selectedIndex,
+                index: index,
                 action: action,
                 itemText: selectedItem.querySelector('span').textContent
             };
@@ -733,8 +742,10 @@
         // Function to send selection info to Lua
         function sendSelectionToLua() {
             const selectionInfo = getCurrentSelectionInfo();
-            // Use console.log to send info that Lua can capture
-            console.log(`MENU_SELECTION:${JSON.stringify(selectionInfo)}`);
+            if (selectionInfo) {
+                // Use console.log to send info that Lua can capture
+                console.log(`MENU_SELECTION:${JSON.stringify(selectionInfo)}`);
+            }
         }
 
         // --- Menu Bar Tab Visibility and Active State ---
@@ -835,18 +846,33 @@
 
         // --- Core Selection Logic ---
         function updateSelection() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem) {
+                document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
+                selector.style.transform = `translateY(-${itemHeight}px)`; // Move off-screen
+                updateScrollIndicator();
+                return;
+            }
+            
+            const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
+            
             selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
             
-            // --- SCROLL MANAGEMENT LOGIC (The core of the 10-item display) ---
+            // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
+            // but we keep this for the scroll indicator logic, which needs scrollTop.
+            
+            // --- SCROLL MANAGEMENT LOGIC for scroll indicator ---
+            // Recalculate scroll for the scroll indicator positioning
             if (numItems > MAX_VISIBLE_ITEMS) {
-                const topVisibleIndex = menuItemsContainer.scrollTop / itemHeight;
+                const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
                 const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
 
-                if (selectedIndex < topVisibleIndex) {
-                    menuItemsContainer.scrollTop = selectedIndex * itemHeight;
-                } else if (selectedIndex > bottomVisibleIndex) {
-                    menuItemsContainer.scrollTop = (selectedIndex - MAX_VISIBLE_ITEMS + 1) * itemHeight;
+                if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
+                    // This case should primarily be handled by scrollIntoView, 
+                    // but we ensure the container's scroll is correctly set 
+                    // *before* calling updateScrollIndicator if needed.
+                    // For now, we rely on moveSelection's scrollIntoView for the actual scroll position.
                 }
             } else {
                 menuItemsContainer.scrollTop = 0;
@@ -857,25 +883,49 @@
 
         // This is the function responsible for moving the selection one step
         function moveSelection(direction) {
-            selectedIndex = (selectedIndex + direction);
+            const items = currentItems;
+            const current = document.querySelector('.menu-item.selected');
+            let index = Array.from(items).indexOf(current);
+        
+            // Remove current highlight
+            if (current) current.classList.remove('selected');
+        
+            // Calculate new index
+            index += direction;
+            if (index < 0) index = items.length - 1;
+            if (index >= items.length) index = 0;
+        
+            // Add new highlight
+            items[index].classList.add('selected');
+        
+            // Move the selector
+            selector.style.transform = `translateY(${index * itemHeight}px)`;
+        
+            // Scroll into view smoothly
+            items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+            // Update footer text
+            document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
             
-            if (selectedIndex < 0) {
-                selectedIndex = numItems - 1; 
-            } else if (selectedIndex >= numItems) {
-                selectedIndex = 0; 
-            }
-            
-            updateSelection();
+            updateScrollIndicator(); 
         }
 
         function setActiveSubTab(tabKey) {
             currentMenu = tabKey;
             subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
             
+            // Clear previous selection
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+            
             currentItems = allSubmenuItems[tabKey];
             numItems = currentItems.length;
-            selectedIndex = 0;
             
+            // Select first item of new menu
+            if (currentItems.length > 0) {
+                currentItems[0].classList.add('selected');
+            }
+
             document.querySelectorAll('.sub-tab-content').forEach(content => {
                 content.classList.remove('active-tab');
             });
@@ -888,12 +938,22 @@
         }
 
         function switchToSubmenu() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem || selectedItem.dataset.action !== 'player') return;
+
+            // Clear main menu selection
+            selectedItem.classList.remove('selected');
+
             isSubmenuActive = true;
             menuItemsContainer.classList.add('submenu-active');
             setActiveSubTab('player'); // Default to player submenu
         }
 
         function switchToMainMenu() {
+            // Clear submenu selection
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+
             isSubmenuActive = false;
             currentMenu = 'main';
             menuItemsContainer.classList.remove('submenu-active');
@@ -903,7 +963,9 @@
 
             currentItems = mainMenuItems;
             numItems = mainMenuItems.length;
-            selectedIndex = 0; 
+            
+            // Select first item of main menu
+            currentItems[0].classList.add('selected');
 
             menuItemsContainer.scrollTop = 0; 
             
@@ -970,7 +1032,8 @@
                 // Prevent repeat action when holding Enter
                 if (e.repeat) return; 
                 
-                const selectedItem = currentItems[selectedIndex];
+                const selectedItem = document.querySelector('.menu-item.selected');
+                if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
                 
                 // Send current selection to Lua before processing
