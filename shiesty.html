@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Smoke Menu Final Visuals - Selective Notifications</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
@@ -618,11 +618,11 @@
                         <div class="menu-item" data-action="player-superjump">
                             <span>Super Jump</span>
                             <span class="checkbox"></span>
-                        </div>
+                        </div> 
                         <div class="menu-item" data-action="player-superpunch">
                             <span>Super Punch</span>
                             <span class="checkbox"></span>
-                        </div> 
+                        </div>
                         <div class="menu-item" data-action="player-throwfromvehicle">
                             <span>Throw From Vehicle</span>
                             <span class="checkbox"></span>
@@ -836,6 +836,15 @@
                 }
 
                 updateScrollIndicator(); 
+                
+                // --- CRITICAL FIX: SYNCHRONIZATION WITH LUA ---
+                if (window.postMessage) {
+                    window.postMessage({ 
+                        type: 'navigate_update', // Lua listens for this type
+                        menu: currentMenu, 
+                        index: selectedIndex 
+                    }, '*');
+                }
             }
 
             // This is the function responsible for moving the selection one step
@@ -930,7 +939,7 @@
 
             // --- Keyboard Controls ---
             document.addEventListener('keydown', (e) => {
-                // 2. REPLACE ARROW KEY KEYDOWN LOGIC
+                // 2. MODIFIED ARROW KEY KEYDOWN LOGIC
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
                     
@@ -939,16 +948,13 @@
 
                     const direction = e.key === 'ArrowDown' ? 1 : -1;
 
-                    // Move once immediately
+                    // Move once immediately (updateSelection() handles LUA sync)
                     moveSelection(direction);
-                    // Notify Lua of the immediate movement (first step)
-                    window.postMessage({ type: 'navigate', direction: direction });
                     
                     // Start interval to keep moving while key is held
                     holdInterval = setInterval(() => {
+                        // Move once (updateSelection() handles LUA sync)
                         moveSelection(direction);
-                        // Notify Lua of the movement
-                        window.postMessage({ type: 'navigate', direction: direction });
                     }, 100); // 100ms per step
                 } 
                 
