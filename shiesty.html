@@ -856,7 +856,15 @@
             
             const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
             
-            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+            // Selector calculation using index (simplified version, less accurate with smooth scroll)
+            // selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+
+            // More accurate selector calculation based on item position (recommended with smooth scroll)
+            const containerTop = menuItemsContainer.getBoundingClientRect().top;
+            const itemTop = selectedItem.getBoundingClientRect().top;
+            const offset = itemTop - containerTop + menuItemsContainer.scrollTop;
+            selector.style.transform = `translateY(${offset}px)`;
+
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
             
             // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
@@ -898,11 +906,14 @@
             // Add new highlight
             items[index].classList.add('selected');
         
-            // Move the selector
-            selector.style.transform = `translateY(${index * itemHeight}px)`;
-        
-            // Scroll into view smoothly
+            // Scroll into view smoothly first
             items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Position the selector based on actual offset relative to container
+            const containerTop = menuItemsContainer.getBoundingClientRect().top;
+            const itemTop = items[index].getBoundingClientRect().top;
+            const offset = itemTop - containerTop + menuItemsContainer.scrollTop;
+            selector.style.transform = `translateY(${offset}px)`;
         
             // Update footer text
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
