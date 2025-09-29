@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -523,7 +523,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -702,7 +702,7 @@
         let isSubmenuActive = false;
         let currentMenu = 'main'; 
         
-        // Removed: let holdInterval = null; 
+        let holdInterval = null; 
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
@@ -1012,13 +1012,18 @@
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 
-                // FIX: Block all movement if key is held down (repeated event)
-                if (e.repeat) return; 
+                // If already holding, do nothing
+                if (holdInterval) return;
 
                 const direction = e.key === 'ArrowDown' ? 1 : -1;
 
-                // Move once per keypress, no continuous scrolling timer is started
+                // Move once immediately
                 moveSelection(direction);
+                
+                // Start interval to keep moving while key is held
+                holdInterval = setInterval(() => {
+                    moveSelection(direction);
+                }, 100); // 100ms per step
             } 
             
             else if (e.key === 'Enter') {
@@ -1063,7 +1068,14 @@
             }
         });
         
-        // Removed the 'keyup' listener that cleared the continuous scrolling timer.
+        // Keyup to clear the interval for continuous movement
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                clearInterval(holdInterval);
+                holdInterval = null;
+            }
+        });
+
 
         // Initialize
         updateMenuBar();
