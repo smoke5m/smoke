@@ -1,127 +1,1121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Freecam DUI</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap');
+    <meta charset="UTF-8">
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- Root Variables --- */
+        :root {
+            --color-menu-bg: #00000079; /* Dark gray body */
+            --color-highlight-pink: #e100ff; /* Pink highlight */
+            --color-highlight-purple: #800080; /* Purple for header */
+            --color-black-section: #0A0A0A; /* Deep black tab/footer */
+            --color-text-bright: #FFFFFF;
+            --item-height: 26px; /* Shorter item height */ 
+            --selector-height: 27px; /* Thinner selector height */
+            --menu-width: 320px;
+            --checkbox-off-color: #ffffff;
+            --checkbox-on-color: #f500f0;
+            --checkbox-bg: #181818;
+            --checkbox-on-bg: #181818;
+            /* New variables for scrollbar */
+            --scrollbar-width: 8px; /* Increased scrollbar width (thicker) */
+            --arrow-height: 8px; /* Height of the arrow icon area */
+            --menu-padding-y: 5px; /* Padding inside menu-items container */
+            
+            /* ADDED: Margin variable for external positioning */
+            --scrollbar-margin: 10px; 
+            
+            /* The calculated height */
+            --visible-content-height: calc(var(--item-height) * 10 + (var(--menu-padding-y) * 2));
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      user-select: none;
-      overflow: hidden;
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-    }
+            /* --- NOTIFICATION VARIABLES --- */
+            --noti-path-color: #0af; /* Blue path color from user request */
+            --path-thickness: 2px;
+            --cycle-duration: 2s; /* Duration for the path animation */
+            
+            /* NEW: Reduced Notification Size */
+            --noti-width: 250px;
+            --noti-height: 60px;
+            --noti-icon-size: 25px;
+            --noti-padding: 10px;
+        }
 
-    .crosshair {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #fff;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px rgba(0,255,255,0.9), 0 0 18px rgba(0,255,255,0.6);
-      pointer-events: none;
-    }
+        /* --- Global Setup --- */
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-start; 
+            align-items: center;          
+            background: transparent; 
+            font-family: 'Roboto', sans-serif;
+            flex-direction: column;
+            padding-left: 20px;            
+        }
 
-    .features {
-      position: fixed;
-      bottom: 16%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.45);
-      padding: 12px 22px;
-      border-radius: 12px;
-      backdrop-filter: blur(6px);
-      text-align: center;
-      box-shadow: 0 0 20px rgba(0,0,0,0.6);
-    }
+        /* --- Main Menu Container --- */
+        .menu-container {
+            position: fixed;
+            top: 50%;
+            left: 100px; 
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .feature {
-      font-size: 15px;
-      line-height: 1.8;
-      opacity: 0.7;
-      color: #fff;
-      transition: all 0.12s ease;
-      text-shadow: 0 0 6px rgba(0,255,255,0.08);
-    }
+        /* --- Main Block for Header and Menu Bar --- */
+        .menu-main-block {
+            width: var(--menu-width);
+            border-radius: 4px; 
+            overflow: hidden;
+        }
 
-    .feature.active {
-      color: #00d9ff;
-      font-weight: 700;
-      font-size: 16px;
-      opacity: 1;
-      text-shadow: 0 0 16px rgba(0,217,255,0.9), 0 0 26px rgba(0,217,255,0.55);
-    }
-  </style>
+        /* --- Header Section --- */
+        .menu-header-wrapper {
+            position: relative;
+            height: 100px;
+            background: var(--color-highlight-purple);
+            border-top-left-radius: 4px; 
+            border-top-right-radius: 4px; 
+        }
+
+        .menu-header {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 500; 
+            font-size: 38px;
+            color: white;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9); 
+        }
+
+        /* --- Menu Bar --- */
+        .menu-bar {
+            background: var(--color-black-section); 
+            height: 30px; 
+            display: flex; 
+            align-items: center;
+            font-weight: 400;
+            font-size: 13px;
+            color: var(--color-text-bright);
+        }
+        
+        /* Ensure the bar is fully black when submenus are active for clean tab edges */
+        .submenu-active .menu-bar {
+            background: #000;
+        }
+        
+        .menu-bar-tab {
+            /* This is the base style for all tabs */
+            background: var(--color-black-section);
+            color: #AAAAAA;
+            padding: 6px 15px; 
+            white-space: nowrap;
+            height: 100%; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 1px 0 5px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-bottom: none;
+            border-left: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* Submenu tabs that expand when Main Menu is hidden */
+        .menu-bar-sub-tab {
+             /* Sub-tabs fill the space when they are visible */
+            flex: 1; 
+        }
+
+        /* --- Main Menu Active State FIX (Corrected Gradient and Shape) --- */
+        .menu-bar-tab.main-active {
+            flex: 0 1 auto; 
+            
+            /* CORRECT GRADIENT: Use the same vertical gradient as the selected item */
+            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
+            
+            /* CORRECT SHAPE: Sharp left, rounded right, no top-left radius */
+            border-top-left-radius: 0px; 
+            border-top-right-radius: 4px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 4px;
+            
+            color: var(--color-text-bright);
+            border: none; 
+            z-index: 10;
+            
+            /* Adjust margins and padding for clean alignment */
+            margin-left: -1px; 
+            padding: 0 15px;
+            height: 100%;
+            margin-right: -10px; 
+        }
+        
+        /* Base style for all submenu tabs */
+        .menu-bar-sub-tab {
+            flex: 1;
+            background: #0d0d0d; /* base dark background */
+            color: var(--color-text-dim);
+            height: 100%;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1); /* thin divider */
+            border-top: none; /* removes the line at the top */
+            border-bottom: none;
+            border-radius: 6px;
+            transition: all 0.25s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Active tab — same gradient as main menu */
+        .menu-bar-sub-tab.active {
+            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%);
+            color: var(--color-text-bright);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: none; /* make sure top line stays gone */
+            border-bottom: none;
+            border-radius: 6px;
+            z-index: 2;
+        }
+        
+        /* Hover effect (soft pink fade) */
+        .menu-bar-sub-tab:hover:not(.active) {
+            background: linear-gradient(180deg, #111 0%, rgba(255, 100, 200, 0.1) 100%);
+            color: var(--color-text-bright);
+        }
+        
+        /* Make borders merge cleanly */
+        .menu-bar-sub-tab + .menu-bar-sub-tab {
+            margin-left: -1px;
+        }
+
+
+        /* --- Items Section --- */
+        .menu-items-wrapper {
+            position: relative;
+            width: var(--menu-width);
+        }
+
+        .menu-items {
+            width: 100%;
+            background: var(--color-menu-bg);
+            position: relative;
+            border-radius: 6px; 
+            padding: var(--menu-padding-y) 0; 
+            margin-top: 5px; 
+            /* Enforce max height for 10 items, enabling internal scroll */
+            max-height: var(--visible-content-height); 
+            overflow-y: auto; 
+            scroll-behavior: smooth; 
+            scrollbar-width: none; 
+        }
+        .menu-items::-webkit-scrollbar {
+            display: none; 
+        }
+
+        
+        .menu-item {
+            height: var(--item-height);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px; 
+            font-size: 13px; 
+            font-weight: 400; 
+            cursor: default;
+            position: relative;
+            color: var(--color-text-bright);
+            transition: box-shadow 0.1s ease;
+        }
+        
+        .menu-item i {
+            font-size: 0.7em; 
+        }
+        
+        /* .menu-item:hover {
+            box-shadow: 
+                inset 0 0 5px rgba(225, 0, 255, 0.4),
+                0 0 3px rgba(225, 0, 255, 0.5); 
+        } */
+
+        .selector {
+            position: absolute;
+            left: 0; 
+            width: 100%; 
+            height: var(--selector-height);
+            /* Reduced background opacity to 0.7 for a more transparent look */
+            background: rgba(168, 0, 154, 0.56); 
+            border-radius: 4px; 
+            z-index: 0;
+            /* FIXED: Sharper Outline. Blur reduced to 2px for a harder edge, spread kept high (6px) to define the thickness. */
+            box-shadow: 0 0 4px 2px rgba(255, 0, 234, 0.82); 
+        }
+        
+        .menu-item span, .menu-item i {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* --- SCROLL INDICATOR STYLES (EXTERNAL) --- */
+        .scroll-indicator-wrapper {
+            position: absolute; 
+            top: 130px; 
+            left: calc(-55% + (var(--menu-width) / 2) + var(--scrollbar-margin) - 5px); 
+            width: var(--scrollbar-width);
+            z-index: 3; 
+            background: #000000; 
+            border-radius: 3px;
+            padding-top: var(--arrow-height);    
+            padding-bottom: var(--arrow-height); 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scroll-indicator-arrow {
+            position: absolute;
+            width: 110%; 
+            height: var(--arrow-height);
+            background: #000000; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white; 
+            font-size: 8px; 
+        }
+
+        .scroll-indicator-arrow.top {
+            top: 0;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+
+        .scroll-indicator-arrow.bottom {
+            bottom: 0;
+            border-bottom-left-radius: 3px;
+            border-bottom-right-radius: 3px;
+        }
+
+        .scroll-indicator-bar {
+            position: relative; 
+            height: 100%; 
+            width: 110%;
+            background: #000000; 
+            border-radius: 0; 
+        }
+        
+        .scroll-thumb {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 90%; 
+            background: #e100ff;
+            border-radius: 2px; 
+            transition: transform 0.25s ease, height 0.25s ease;
+            box-shadow: 0 0 8px #e100ff; 
+        }
+
+
+        /* --- Checkbox Styles --- */
+        .checkbox {
+            width: 30px;
+            height: 14px;
+            background: var(--checkbox-bg);
+            border-radius: 20px;
+            position: relative;
+            flex-shrink: 0;
+            transition: background 0.08s linear;
+            pointer-events: none;
+        }
+        .checkbox::after {
+            content: "";
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--checkbox-off-color);
+            transition: transform 0.08s linear, background 0.08s linear;
+        }
+        .checkbox.on {
+            background: var(--checkbox-on-bg);
+        }
+        .checkbox.on::after {
+            transform: translateX(16px);
+            background: var(--checkbox-on-color);
+        }
+
+        /* --- Footer Section --- */
+        .menu-footer {
+            width: calc(var(--menu-width) - 30px);
+            background: var(--color-black-section);
+            color: white;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 15px;
+            border-radius: 5px; 
+            margin-top: 5px; 
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .footer-details {
+            display: flex;
+            align-items: center;
+        }
+
+        .footer-icon-wrapper {
+            display: flex;
+            align-items: center;
+            padding-right: 10px;
+            margin-right: 8px; 
+            border-right: 1px solid rgba(255, 255, 255, 0.35); 
+        }
+        
+        .footer-icon {
+            font-size: 16px;
+            color: white; 
+        }
+
+        .footer-info {
+            color: #C0C0C0; 
+            white-space: nowrap;
+        }
+        
+        .menu-footer .right {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* --- Submenu Styles --- */
+        /* Only show main menu container by default */
+        .main-menu {
+            display: block;
+        }
+        /* Hide all submenu containers by default */
+        .submenu > div {
+            display: none;
+        }
+        /* When submenu is active, hide the main menu container */
+        .submenu-active .main-menu {
+            display: none;
+        }
+        /* Show the specific active submenu tab items */
+        .submenu-active .sub-tab-content.active-tab {
+            display: block;
+        }
+
+        /* Hide main menu tab and show submenu tabs */
+        .submenu-active .menu-bar-tab.main-active {
+            display: none !important;
+        }
+        
+        /* Show the sub-tabs when submenu is active */
+        .submenu-active .menu-bar-sub-tab {
+            display: flex;
+        }
+        
+        /* ------------------- NEW NOTIFICATION STYLES ------------------- */
+        .notification-box {
+            position: fixed;
+            bottom: 20px; /* Position bottom-right */
+            right: 20px;
+            
+            /* Initial visibility state */
+            opacity: 0; 
+            transform: translateX(100%); 
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            
+            /* Box Styling (Reduced Size) */
+            width: var(--noti-width); 
+            height: var(--noti-height); 
+            background-color: #000;
+            border-radius: 5px;
+            color: #fff;
+            padding: var(--noti-padding); 
+            box-sizing: border-box;
+            overflow: hidden;
+            border: 1px solid #111;
+            z-index: 1000;
+        }
+        
+        /* Show/Hide States */
+        .notification-box.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-box.hide {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        
+        /* --- Content Styles --- */
+        .content {
+            display: flex; 
+            align-items: center; 
+            gap: 10px; /* Reduced gap */
+            z-index: 2; 
+            position: relative;
+            height: 100%; /* Ensure content fills the box height for centering */
+        }
+        .icon-group {
+            position: relative; 
+            font-size: var(--noti-icon-size); /* Reduced icon size */
+            line-height: 1;
+            color: var(--noti-path-color); 
+            text-shadow: 0 0 5px var(--noti-path-color);
+            margin-right: 5px;
+        }
+        .fa-check-circle { font-size: 0.9em; }
+        .title { 
+            font-size: 1em; /* Reduced font size */
+            font-weight: 500; 
+            line-height: 1.2; 
+        }
+        .message { 
+            font-size: 0.8em; /* Reduced font size */
+            color: #bbb; 
+        }
+
+        /* ------------------- The Animated Path ------------------- */
+
+        /* Shared styles for both path segments */
+        .notification-box::before,
+        .notification-box::after {
+            content: '';
+            position: absolute;
+            background: var(--noti-path-color);
+            box-shadow: 0 0 5px var(--noti-path-color);
+        }
+
+        /* 1. Horizontal Path (Bottom Edge) */
+        .notification-box::before {
+            bottom: 0;
+            left: 0;
+            height: var(--path-thickness);
+            width: 100%;
+            transform-origin: left center;
+        }
+
+        /* 2. Vertical Path (Left Edge) */
+        .notification-box::after {
+            bottom: 0;
+            left: 0;
+            width: var(--path-thickness);
+            height: 100%;
+            transform-origin: bottom center;
+        }
+        
+        /* Apply animations only when the 'show' class is present */
+        .notification-box.show::before {
+            animation: move-h var(--cycle-duration) linear forwards;
+        }
+        .notification-box.show::after {
+            animation: move-v var(--cycle-duration) linear forwards;
+        }
+
+
+        /* --- Keyframe Animations --- */
+
+        /* Horizontal Path: Full -> Disappears Left-to-Right */
+        @keyframes move-h {
+            0% { transform: scaleX(1); }
+            100% { transform: scaleX(0); } 
+        }
+
+        /* Vertical Path: Full -> Disappears Bottom-to-Top */
+        @keyframes move-v {
+            0% { transform: scaleY(1); }
+            100% { transform: scaleY(0); } 
+        }
+        
+        /* --- NEW .selected STYLES --- */
+        .menu-item.selected {
+            /* no visual styles here */
+        }
+    </style>
 </head>
 <body>
-  <div class="crosshair" id="crosshair"></div>
-  <div class="features" id="features"></div>
+    
+    <div class="menu-container">
+        <div class="menu-main-block">
+            <div class="menu-header-wrapper">
+                <div class="menu-header">smoke</div>
+            </div>
+            
+            <div class="menu-bar" id="menuBar">
+                <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
 
-  <script>
-    const featuresEl = document.getElementById('features');
+                <span class="menu-bar-tab menu-bar-sub-tab" id="playerSubTab" data-tab-key="player">Player</span>
+                <span class="menu-bar-tab menu-bar-sub-tab" id="appearanceSubTab" data-tab-key="appearance">Appearance</span>
 
-    function renderFeatures(features, currentIndex, optionName) {
-      featuresEl.innerHTML = '';
-      if (!features) return;
-      features.forEach((f, idx) => {
-        const row = document.createElement('div')
-        row.className = 'feature' + (idx+1 === (currentIndex or 0) ? ' active' : '');
-        // support both string and object forms
-        if (typeof f === 'string') row.textContent = (idx+1 === currentIndex ? '› ' + f : f);
-        else row.textContent = (idx+1 === currentIndex ? '› ' + (f.name || f) : (f.name || f));
-        featuresEl.appendChild(row);
-      });
-      // Append optionName for features that have an option (weapon/vehicle)
-      if (optionName and optionName ~= "") {
-        const opt = document.createElement('div');
-        opt.style.marginTop = '6px';
-        opt.style.fontSize = '13px';
-        opt.style.opacity = '0.85';
-        opt.textContent = '(' + optionName + ')';
-        featuresEl.appendChild(opt);
-      }
-    }
+            </div>
+        </div>
+        
+        <div class="scroll-indicator-wrapper" id="scrollIndicatorWrapper">
+            <div class="scroll-indicator-arrow top"><i class="fas fa-chevron-up"></i></div>
+            <div class="scroll-indicator-bar">
+                <div class="scroll-thumb" id="scrollThumb"></div>
+            </div>
+            <div class="scroll-indicator-arrow bottom"><i class="fas fa-chevron-down"></i></div>
+        </div>
+        
+        <div class="menu-items-wrapper">
+            <div class="menu-items" id="menuItems">
+                <div class="selector" id="selector"></div>
+                
+                <div class="main-menu">
+                    <div class="menu-item" data-action="player">
+                        <span>Player</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="server">
+                        <span>Server</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="weapon">
+                        <span>Weapon</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="combat">
+                        <span>Combat</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="vehicle">
+                        <span>Vehicle</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="visual">
+                        <span>Visual</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="miscellaneous">
+                        <span>Miscellaneous</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="settings">
+                        <span>Settings</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" data-action="search">
+                        <span>Search</span>
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                
+                <div class="submenu">
+                    <div id="playerSubmenu" class="sub-tab-content">
+                        <div class="menu-item" data-action="player-revive">
+                            <span>Revive</span>
+                            <span></span>
+                        </div>
+                        <div class="menu-item" data-action="player-health">
+                            <span>Health</span>
+                            <span></span>
+                        </div>
+                        <div class="menu-item" data-action="player-armor">
+                            <span>Armor</span>
+                            <span></span>
+                        </div>
+                        <div class="menu-item" data-action="player-godmode">
+                            <span>Godmode</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-noclip">
+                            <span>Noclip</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-invisible">
+                            <span>invisible</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-noragdoll">
+                            <span>No Ragdoll</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-infinitestamina">
+                            <span>Infinite Stamina</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-superjump">
+                            <span>Super Jump</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-superpunch">
+                            <span>Super Punch</span>
+                            <span class="checkbox"></span>
+                        </div> 
+                        <div class="menu-item" data-action="player-throwfromvehicle">
+                            <span>Throw From Vehicle</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-nametags">
+                            <span>Name Tags</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-crosshair">
+                            <span>Crosshair</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="player-fastrun">
+                            <span>Fast Run</span>
+                            <span class="checkbox"></span>
+                        </div>
+                    </div>
 
-    // Cross-browser-friendly message receiver
-    window.addEventListener('message', (ev) => {
-      try {
-        const d = ev.data;
-        if (!d) return;
-        if (d.type === 'updateUI') {
-          // d.features (array), d.currentFeatureIndex (1-based), d.optionName
-          const features = d.features || [];
-          const idx = d.currentFeatureIndex or 1;
-          const optionName = d.optionName or "";
-          // Render
-          featuresEl.innerHTML = '';
-          for (let i = 0; i < features.length; i++) {
-            const f = features[i];
-            const el = document.createElement('div');
-            el.className = 'feature' + ((i+1) === d.currentFeatureIndex ? ' active' : '');
-            el.textContent = (typeof f === 'string') ? f : (f.name || f);
-            featuresEl.appendChild(el);
-          }
-          if (optionName && optionName.length > 0) {
-            const opt = document.createElement('div');
-            opt.style.marginTop = '6px';
-            opt.style.fontSize = '13px';
-            opt.style.opacity = '0.85';
-            opt.textContent = '(' + optionName + ')';
-            featuresEl.appendChild(opt);
-          }
+                    <div id="appearanceSubmenu" class="sub-tab-content">
+                        <div class="menu-item" data-action="randomize-outfit">
+                            <span>Randomize Outfit</span>
+                            <span></span>
+                        </div>
+                        <div class="menu-item" data-action="appearance-hat">
+                            <span>Toggle Hat</span>
+                            <span class="checkbox"></span>
+                        </div>
+                        <div class="menu-item" data-action="appearance-accessories">
+                            <span>Random Accessories</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-footer">
+            <div class="footer-details">
+                <div class="footer-icon-wrapper">
+                    <i class="fas fa-running footer-icon"></i>
+                </div>
+                <span class="footer-info">271078 | 9d ago</span>
+            </div>
+            <div class="right">1/9</div>
+        </div>
+    </div>
+
+<script>
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || !data.type) return;
+        if (data.type === 'keydown' || data.type === 'keyup') {
+            const e = new KeyboardEvent(data.type, {
+                key: data.key || '',
+                keyCode: data.keyCode,
+                bubbles: true
+            });
+            document.dispatchEvent(e);
         }
-      } catch (e) {
-        // ignore errors
-      }
-    }, false);
-  </script>
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuItemsContainer = document.getElementById('menuItems');
+        const selector = document.getElementById('selector');
+        const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
+        const scrollIndicatorBar = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar'); 
+        const scrollThumb = document.getElementById('scrollThumb'); 
+        const mainMenuTab = document.getElementById('mainMenuTab');
+        const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
+        let subTabIndex = 0; 
+
+        // let selectedIndex = 0; // REMOVED: No longer needed as source of truth
+        let isSubmenuActive = false;
+        let currentMenu = 'main'; 
+        
+        let holdInterval = null; 
+
+        const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
+        const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
+
+        const MAX_VISIBLE_ITEMS = 10;
+        const NOTI_DURATION = 2000; // 2 seconds for visibility
+        const NOTI_TRANSITION = 300; // 0.3 seconds for fade/slide
+
+        const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
+        const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
+        const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
+        
+        const allSubmenuItems = {
+            'player': playerSubmenuItems,
+            'appearance': appearanceSubmenuItems
+        };
+
+        let currentItems = mainMenuItems;
+        currentItems[0].classList.add('selected'); // first item selected at start
+        let numItems = currentItems.length;
+
+        // Function to get current selection info
+        function getCurrentSelectionInfo() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem) return null;
+            const action = selectedItem.dataset.action;
+            const index = Array.from(currentItems).indexOf(selectedItem);
+            
+            return {
+                menu: currentMenu,
+                index: index,
+                action: action,
+                itemText: selectedItem.querySelector('span').textContent
+            };
+        }
+
+        // Function to send selection info to Lua
+        function sendSelectionToLua() {
+            const selectionInfo = getCurrentSelectionInfo();
+            if (selectionInfo) {
+                // Use console.log to send info that Lua can capture
+                console.log(`MENU_SELECTION:${JSON.stringify(selectionInfo)}`);
+            }
+        }
+
+        // --- Menu Bar Tab Visibility and Active State ---
+        function updateMenuBar() {
+            if (currentMenu === 'main') {
+                mainMenuTab.classList.add('main-active');
+                mainMenuTab.style.display = 'flex'; 
+                subTabs.forEach(tab => tab.style.display = 'none');
+                menuItemsContainer.classList.remove('submenu-active');
+            } else if (isSubmenuActive) {
+                mainMenuTab.classList.remove('main-active');
+                mainMenuTab.style.display = 'none'; 
+                subTabs.forEach(tab => {
+                    tab.style.display = 'flex'; 
+                    tab.classList.remove('active');
+                });
+                subTabs[subTabIndex].classList.add('active');
+                menuItemsContainer.classList.add('submenu-active');
+            }
+        }
+
+        // --- Scroll Indicator Logic ---
+        function updateScrollIndicator() {
+            const menuHeight = menuItemsContainer.clientHeight;
+            scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
+
+            const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
+            
+            const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
+            const totalContentHeight = numItems * itemHeight;
+            
+            // If there are less than MAX_VISIBLE_ITEMS, set thumb to full height
+            let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
+                ? thumbTrackHeight
+                : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight); 
+            
+            scrollThumb.style.height = `${thumbHeight}px`;
+
+            const maxThumbTravel = thumbTrackHeight - thumbHeight;
+            
+            let scrollPercentage = 0;
+            if (numItems > MAX_VISIBLE_ITEMS) {
+                const maxScrollTop = totalContentHeight - visibleHeight;
+                if (maxScrollTop > 0) {
+                    scrollPercentage = menuItemsContainer.scrollTop / maxScrollTop;
+                }
+            }
+            
+            const thumbPosition = scrollPercentage * maxThumbTravel;
+            scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
+        }
+
+
+        // --- Notification Function (Updated for new visual style) ---
+        function showNotification(action, title = 'Action Confirmed') {
+            const existingNotification = document.querySelector('.notification-box');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = 'notification-box';
+
+            // Format the action string: 'player-godmode' -> 'Player Godmode'
+            let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ');
+
+            const htmlContent = `
+                <div class="content">
+                    <div class="icon-group">
+                        <i class="fa-solid fa-check-circle"></i> 
+                    </div>
+                    <div class="text-group">
+                        <div class="title">${title}</div>
+                        <div class="message">${actionMessage}</div>
+                    </div>
+                </div>
+            `;
+            
+            notification.innerHTML = htmlContent;
+            document.body.appendChild(notification);
+
+            // 1. Show the notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            // 2. Hide the notification after NOTI_DURATION (2000ms)
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.classList.add('hide');
+                
+                // 3. Remove the element from DOM after transition completes
+                setTimeout(() => {
+                    notification.remove();
+                }, NOTI_TRANSITION); 
+            }, NOTI_DURATION);
+        }
+
+        // --- Core Selection Logic ---
+        function updateSelection() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem) {
+                document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
+                selector.style.transform = `translateY(-${itemHeight}px)`; // Move off-screen
+                updateScrollIndicator();
+                return;
+            }
+            
+            const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
+            
+            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
+            
+            // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
+            // but we keep this for the scroll indicator logic, which needs scrollTop.
+            
+            // --- SCROLL MANAGEMENT LOGIC for scroll indicator ---
+            // Recalculate scroll for the scroll indicator positioning
+            if (numItems > MAX_VISIBLE_ITEMS) {
+                const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
+                const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
+
+                if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
+                    // This case should primarily be handled by scrollIntoView, 
+                    // but we ensure the container's scroll is correctly set 
+                    // *before* calling updateScrollIndicator if needed.
+                    // For now, we rely on moveSelection's scrollIntoView for the actual scroll position.
+                }
+            } else {
+                menuItemsContainer.scrollTop = 0;
+            }
+
+            updateScrollIndicator(); 
+        }
+
+        // This is the function responsible for moving the selection one step
+        function moveSelection(direction) {
+            const items = currentItems;
+            const current = document.querySelector('.menu-item.selected');
+            let index = Array.from(items).indexOf(current);
+        
+            // Remove current highlight
+            if (current) current.classList.remove('selected');
+        
+            // Calculate new index
+            index += direction;
+            if (index < 0) index = items.length - 1;
+            if (index >= items.length) index = 0;
+        
+            // Add new highlight
+            items[index].classList.add('selected');
+        
+            // Move the selector
+            selector.style.transform = `translateY(${index * itemHeight}px)`;
+        
+            // Scroll into view smoothly
+            items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+            // Update footer text
+            document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
+            
+            updateScrollIndicator(); 
+        }
+
+        function setActiveSubTab(tabKey) {
+            currentMenu = tabKey;
+            subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
+            
+            // Clear previous selection
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+            
+            currentItems = allSubmenuItems[tabKey];
+            numItems = currentItems.length;
+            
+            // Select first item of new menu
+            if (currentItems.length > 0) {
+                currentItems[0].classList.add('selected');
+            }
+
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active-tab');
+            });
+            document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
+
+            menuItemsContainer.scrollTop = 0; 
+            
+            updateMenuBar();
+            updateSelection();
+        }
+
+        function switchToSubmenu() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem || selectedItem.dataset.action !== 'player') return;
+
+            // Clear main menu selection
+            selectedItem.classList.remove('selected');
+
+            isSubmenuActive = true;
+            menuItemsContainer.classList.add('submenu-active');
+            setActiveSubTab('player'); // Default to player submenu
+        }
+
+        function switchToMainMenu() {
+            // Clear submenu selection
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+
+            isSubmenuActive = false;
+            currentMenu = 'main';
+            menuItemsContainer.classList.remove('submenu-active');
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active-tab');
+            });
+
+            currentItems = mainMenuItems;
+            numItems = mainMenuItems.length;
+            
+            // Select first item of main menu
+            currentItems[0].classList.add('selected');
+
+            menuItemsContainer.scrollTop = 0; 
+            
+            updateMenuBar();
+            updateSelection();
+        }
+
+        // --- Tab Switching Logic (Q and E) ---
+        function switchSubTab(direction) {
+            if (!isSubmenuActive) return;
+
+            let newIndex = subTabIndex + direction;
+            
+            if (newIndex < 0) {
+                newIndex = subTabs.length - 1;
+            } else if (newIndex >= subTabs.length) {
+                newIndex = 0;
+            }
+            
+            setActiveSubTab(subTabs[newIndex].dataset.tabKey);
+        }
+
+
+        // --- Checkbox Toggle Logic ---
+        function toggleCheckbox(item) {
+            const checkbox = item.querySelector('.checkbox');
+            if (checkbox) {
+                checkbox.classList.toggle('on');
+                const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
+                
+                // ONLY CALL showNotification for toggle actions
+                showNotification(item.dataset.action, state); 
+            }
+        }
+
+        // --- Execute Action Logic ---
+        function executeAction(action) {
+            // Non-toggle actions
+        }
+
+        // --- Keyboard Controls ---
+        document.addEventListener('keydown', (e) => {
+            // Arrow key navigation without postMessage
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                
+                // If already holding, do nothing
+                if (holdInterval) return;
+
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+
+                // Move once immediately
+                moveSelection(direction);
+                
+                // Start interval to keep moving while key is held
+                holdInterval = setInterval(() => {
+                    moveSelection(direction);
+                }, 100); // 100ms per step
+            } 
+            
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                // Prevent repeat action when holding Enter
+                if (e.repeat) return; 
+                
+                const selectedItem = document.querySelector('.menu-item.selected');
+                if (!selectedItem) return;
+                const action = selectedItem.dataset.action;
+                
+                // Send current selection to Lua before processing
+                sendSelectionToLua();
+                
+                if (currentMenu === 'main') {
+                    // All main menu items are category buttons
+                    if (action === 'player') {
+                        switchToSubmenu();
+                    }
+                } else if (isSubmenuActive) {
+                    // Submenu item action
+                    if (selectedItem.querySelector('.checkbox')) {
+                        // This will call showNotification internally
+                        toggleCheckbox(selectedItem); 
+                    } else {
+                        // Actions like Revive/Randomize Outfit will execute but NOT show a generic notification
+                        executeAction(action); 
+                    }
+                } 
+            } else if (e.key === 'Backspace' && isSubmenuActive) {
+                e.preventDefault();
+                switchToMainMenu(); 
+            } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+                e.preventDefault();
+                
+                // Prevent repeat action when holding Q or E
+                if (e.repeat) return; 
+                
+                const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
+                switchSubTab(direction);
+            }
+        });
+        
+        // Keyup to clear the interval for continuous movement
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                clearInterval(holdInterval);
+                holdInterval = null;
+            }
+        });
+
+
+        // Initialize
+        updateMenuBar();
+        updateSelection();
+    });
+</script>
 </body>
 </html>
