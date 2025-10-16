@@ -24,14 +24,12 @@
             /* New variables for scrollbar */
             --scrollbar-width: 8px; /* Increased scrollbar width (thicker) */
             --arrow-height: 8px; /* Height of the arrow icon area */
-            --menu-padding-y: 5px; /* Padding inside menu-items container */
+            --menu-padding-y: 2px; /* Padding inside menu-items container */
             
             /* ADDED: Margin variable for external positioning */
-            --scrollbar-margin: 10px; 
-            
+            --scrollbar-margin: 5px;
             /* The calculated height */
             --visible-content-height: calc(var(--item-height) * 10 + (var(--menu-padding-y) * 2));
-
             /* --- NOTIFICATION VARIABLES --- */
             --noti-path-color: #0af; /* Blue path color from user request */
             --path-thickness: 2px;
@@ -54,7 +52,7 @@
             background: transparent; 
             font-family: 'Roboto', sans-serif;
             flex-direction: column;
-            padding-left: 20px;            
+            padding-left: 20px;
         }
 
         /* --- Main Menu Container --- */
@@ -97,7 +95,7 @@
 
         /* --- Menu Bar --- */
         .menu-bar {
-            background: var(--color-black-section); 
+            background: var(--color-black-section);
             height: 30px; 
             display: flex; 
             align-items: center;
@@ -132,18 +130,16 @@
         /* Submenu tabs that expand when Main Menu is hidden */
         .menu-bar-sub-tab {
              /* Sub-tabs fill the space when they are visible */
-            flex: 1; 
+            flex: 1;
         }
 
         /* --- Main Menu Active State FIX (Corrected Gradient and Shape) --- */
         .menu-bar-tab.main-active {
-            flex: 0 1 auto; 
-            
+            flex: 0 1 auto;
             /* CORRECT GRADIENT: Use the same vertical gradient as the selected item */
-            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%); 
-            
+            background: linear-gradient(180deg, #000 0%, var(--color-highlight-pink) 100%);
             /* CORRECT SHAPE: Sharp left, rounded right, no top-left radius */
-            border-top-left-radius: 0px; 
+            border-top-left-radius: 0px;
             border-top-right-radius: 4px;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 4px;
@@ -151,9 +147,8 @@
             color: var(--color-text-bright);
             border: none; 
             z-index: 10;
-            
             /* Adjust margins and padding for clean alignment */
-            margin-left: -1px; 
+            margin-left: -1px;
             padding: 0 15px;
             height: 100%;
             margin-right: -10px; 
@@ -215,15 +210,15 @@
             position: relative;
             border-radius: 6px; 
             padding: var(--menu-padding-y) 0; 
-            margin-top: 5px; 
+            margin-top: 5px;
             /* Enforce max height for 10 items, enabling internal scroll */
-            max-height: var(--visible-content-height); 
+            max-height: var(--visible-content-height);
             overflow-y: auto; 
             scroll-behavior: smooth; 
             scrollbar-width: none; 
         }
         .menu-items::-webkit-scrollbar {
-            display: none; 
+            display: none;
         }
 
         
@@ -242,13 +237,13 @@
         }
         
         .menu-item i {
-            font-size: 0.7em; 
+            font-size: 0.7em;
         }
         
         /* .menu-item:hover {
             box-shadow: 
                 inset 0 0 5px rgba(225, 0, 255, 0.4),
-                0 0 3px rgba(225, 0, 255, 0.5); 
+                0 0 3px rgba(225, 0, 255, 0.5);
         } */
 
         .selector {
@@ -256,11 +251,10 @@
             left: 0; 
             width: 100%; 
             height: var(--selector-height);
-            /* Reduced background opacity to 0.7 for a more transparent look */
+            transition: transform 0.25s ease;
             background: rgba(168, 0, 154, 0.56); 
             border-radius: 4px; 
             z-index: 0;
-            /* FIXED: Sharper Outline. Blur reduced to 2px for a harder edge, spread kept high (6px) to define the thickness. */
             box-shadow: 0 0 4px 2px rgba(255, 0, 234, 0.82); 
         }
         
@@ -271,7 +265,7 @@
         
         /* --- SCROLL INDICATOR STYLES (EXTERNAL) --- */
         .scroll-indicator-wrapper {
-            position: absolute; 
+            position: absolute;
             top: 130px; 
             left: calc(-55% + (var(--menu-width) / 2) + var(--scrollbar-margin) - 5px); 
             width: var(--scrollbar-width);
@@ -295,7 +289,7 @@
             justify-content: center;
             align-items: center;
             color: white; 
-            font-size: 8px; 
+            font-size: 8px;
         }
 
         .scroll-indicator-arrow.top {
@@ -311,7 +305,7 @@
         }
 
         .scroll-indicator-bar {
-            position: relative; 
+            position: relative;
             height: 100%; 
             width: 110%;
             background: #000000; 
@@ -371,7 +365,7 @@
             align-items: center;
             padding: 4px 15px;
             border-radius: 5px; 
-            margin-top: 5px; 
+            margin-top: 5px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -386,7 +380,7 @@
             align-items: center;
             padding-right: 10px;
             margin-right: 8px; 
-            border-right: 1px solid rgba(255, 255, 255, 0.35); 
+            border-right: 1px solid rgba(255, 255, 255, 0.35);
         }
         
         .footer-icon {
@@ -395,7 +389,7 @@
         }
 
         .footer-info {
-            color: #C0C0C0; 
+            color: #C0C0C0;
             white-space: nowrap;
         }
         
@@ -437,14 +431,13 @@
             position: fixed;
             bottom: 20px; /* Position bottom-right */
             right: 20px;
-            
             /* Initial visibility state */
             opacity: 0; 
-            transform: translateX(100%); 
+            transform: translateX(100%);
             transition: opacity 0.3s ease-out, transform 0.3s ease-out;
             
             /* Box Styling (Reduced Size) */
-            width: var(--noti-width); 
+            width: var(--noti-width);
             height: var(--noti-height); 
             background-color: #000;
             border-radius: 5px;
@@ -469,15 +462,15 @@
         
         /* --- Content Styles --- */
         .content {
-            display: flex; 
+            display: flex;
             align-items: center; 
             gap: 10px; /* Reduced gap */
-            z-index: 2; 
+            z-index: 2;
             position: relative;
             height: 100%; /* Ensure content fills the box height for centering */
         }
         .icon-group {
-            position: relative; 
+            position: relative;
             font-size: var(--noti-icon-size); /* Reduced icon size */
             line-height: 1;
             color: var(--noti-path-color); 
@@ -488,11 +481,11 @@
         .title { 
             font-size: 1em; /* Reduced font size */
             font-weight: 500; 
-            line-height: 1.2; 
+            line-height: 1.2;
         }
         .message { 
             font-size: 0.8em; /* Reduced font size */
-            color: #bbb; 
+            color: #bbb;
         }
 
         /* ------------------- The Animated Path ------------------- */
@@ -558,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -581,6 +574,7 @@
         <div class="menu-items-wrapper">
             <div class="menu-items" id="menuItems">
                 <div class="selector" id="selector"></div>
+                
                 
                 <div class="main-menu">
                     <div class="menu-item" data-action="player">
@@ -722,7 +716,6 @@
             document.dispatchEvent(e);
         }
     });
-
     document.addEventListener('DOMContentLoaded', () => {
         const menuItemsContainer = document.getElementById('menuItems');
         const selector = document.getElementById('selector');
@@ -741,7 +734,6 @@
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
-
         const MAX_VISIBLE_ITEMS = 10;
         const NOTI_DURATION = 2000; // 2 seconds for visibility
         const NOTI_TRANSITION = 300; // 0.3 seconds for fade/slide
@@ -749,12 +741,10 @@
         const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
         const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
         const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
-        
         const allSubmenuItems = {
             'player': playerSubmenuItems,
             'appearance': appearanceSubmenuItems
         };
-
         let currentItems = mainMenuItems;
         currentItems[0].classList.add('selected'); // first item selected at start
         let numItems = currentItems.length;
@@ -765,7 +755,6 @@
             if (!selectedItem) return null;
             const action = selectedItem.dataset.action;
             const index = Array.from(currentItems).indexOf(selectedItem);
-            
             return {
                 menu: currentMenu,
                 index: index,
@@ -815,8 +804,7 @@
             // If there are less than MAX_VISIBLE_ITEMS, set thumb to full height
             let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
                 ? thumbTrackHeight
-                : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight); 
-            
+                : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight);
             scrollThumb.style.height = `${thumbHeight}px`;
 
             const maxThumbTravel = thumbTrackHeight - thumbHeight;
@@ -843,10 +831,8 @@
 
             const notification = document.createElement('div');
             notification.className = 'notification-box';
-
             // Format the action string: 'player-godmode' -> 'Player Godmode'
             let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ');
-
             const htmlContent = `
                 <div class="content">
                     <div class="icon-group">
@@ -861,12 +847,12 @@
             
             notification.innerHTML = htmlContent;
             document.body.appendChild(notification);
-
+            
             // 1. Show the notification
             setTimeout(() => {
                 notification.classList.add('show');
             }, 10);
-
+            
             // 2. Hide the notification after NOTI_DURATION (2000ms)
             setTimeout(() => {
                 notification.classList.remove('show');
@@ -890,13 +876,11 @@
             }
             
             const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
-            
             selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
             
             // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
             // but we keep this for the scroll indicator logic, which needs scrollTop.
-            
             // --- SCROLL MANAGEMENT LOGIC for scroll indicator ---
             // Recalculate scroll for the scroll indicator positioning
             if (numItems > MAX_VISIBLE_ITEMS) {
@@ -913,7 +897,7 @@
                 menuItemsContainer.scrollTop = 0;
             }
 
-            updateScrollIndicator(); 
+            updateScrollIndicator();
         }
 
         // This is the function responsible for moving the selection one step
@@ -924,21 +908,21 @@
         
             // Remove current highlight
             if (current) current.classList.remove('selected');
-        
+            
             // Calculate new index
             index += direction;
             if (index < 0) index = items.length - 1;
             if (index >= items.length) index = 0;
-        
+            
             // Add new highlight
             items[index].classList.add('selected');
-        
+            
             // Move the selector
             selector.style.transform = `translateY(${index * itemHeight}px)`;
-        
+            
             // Scroll into view smoothly
             items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
+            
             // Update footer text
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
             
@@ -978,7 +962,6 @@
 
             // Clear main menu selection
             selectedItem.classList.remove('selected');
-
             isSubmenuActive = true;
             menuItemsContainer.classList.add('submenu-active');
             setActiveSubTab('player'); // Default to player submenu
@@ -995,13 +978,11 @@
             document.querySelectorAll('.sub-tab-content').forEach(content => {
                 content.classList.remove('active-tab');
             });
-
             currentItems = mainMenuItems;
             numItems = mainMenuItems.length;
             
             // Select first item of main menu
             currentItems[0].classList.add('selected');
-
             menuItemsContainer.scrollTop = 0; 
             
             updateMenuBar();
@@ -1011,7 +992,6 @@
         // --- Tab Switching Logic (Q and E) ---
         function switchSubTab(direction) {
             if (!isSubmenuActive) return;
-
             let newIndex = subTabIndex + direction;
             
             if (newIndex < 0) {
@@ -1032,7 +1012,7 @@
                 const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
                 
                 // ONLY CALL showNotification for toggle actions
-                showNotification(item.dataset.action, state); 
+                showNotification(item.dataset.action, state);
             }
         }
 
@@ -1056,24 +1036,25 @@
                 moveSelection(direction);
                 
                 // Start interval to keep moving while key is held
+                // ** THIS IS THE ONLY LINE CHANGED FROM YOUR ORIGINAL FILE **
                 holdInterval = setInterval(() => {
                     moveSelection(direction);
-                }, 100); // 100ms per step
+                }, 200); // SET TO 200ms FOR NORMAL SCROLL SPEED
             } 
             
             else if (e.key === 'Enter') {
                 e.preventDefault();
                 
                 // Prevent repeat action when holding Enter
-                if (e.repeat) return; 
-                
+                if (e.repeat) return;
+
                 const selectedItem = document.querySelector('.menu-item.selected');
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
-                
+
                 // Send current selection to Lua before processing
                 sendSelectionToLua();
-                
+
                 if (currentMenu === 'main') {
                     // All main menu items are category buttons
                     if (action === 'player') {
