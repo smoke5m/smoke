@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -879,19 +879,26 @@
             let index = Array.from(items).indexOf(current);
         
             if (current) current.classList.remove('selected');
-            
+        
             index += direction;
             if (index < 0) index = items.length - 1;
             if (index >= items.length) index = 0;
-            
+        
             items[index].classList.add('selected');
+        
+            // 🔹 Immediate visual update
             selector.style.transform = `translateY(${index * itemHeight}px)`;
-            items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // 🔹 Use 'auto' to prevent smooth scroll lag
+            items[index].scrollIntoView({ behavior: 'auto', block: 'center' });
+        
+            // 🔹 Update footer count
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
-            
+        
+            // 🔹 Update scrollbar
             updateScrollIndicator();
-            
-            // NEW: Send updated selection to Lua
+        
+            // 🔹 Send Lua the exact current selection every move
             sendSelectionToLua();
         }
 
