@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -617,59 +617,59 @@
                 
                 <div class="submenu">
                     <div id="playerSubmenu" class="sub-tab-content">
-                        <div class="menu-item" data-action="player-revive">
+                        <div class="menu-item" data-action="revive">
                             <span>Revive</span>
                             <span></span>
                         </div>
-                        <div class="menu-item" data-action="player-health">
+                        <div class="menu-item" data-action="health">
                             <span>Health</span>
                             <span></span>
                         </div>
-                        <div class="menu-item" data-action="player-armor">
+                        <div class="menu-item" data-action="armor">
                             <span>Armor</span>
                             <span></span>
                         </div>
-                        <div class="menu-item" data-action="player-godmode">
+                        <div class="menu-item" data-action="godmode">
                             <span>Godmode</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-noclip">
+                        <div class="menu-item" data-action="noclip">
                             <span>Noclip</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-invisible">
+                        <div class="menu-item" data-action="invisible">
                             <span>invisible</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-noragdoll">
+                        <div class="menu-item" data-action="no_ragdoll">
                             <span>No Ragdoll</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-infinitestamina">
+                        <div class="menu-item" data-action="infinite_stamina">
                             <span>Infinite Stamina</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-superjump">
+                        <div class="menu-item" data-action="super_jump">
                             <span>Super Jump</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-superpunch">
+                        <div class="menu-item" data-action="super_punch">
                             <span>Super Punch</span>
                             <span class="checkbox"></span>
                         </div> 
-                        <div class="menu-item" data-action="player-throwfromvehicle">
+                        <div class="menu-item" data-action="throw_from_vehicle">
                             <span>Throw From Vehicle</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-nametags">
+                        <div class="menu-item" data-action="name_tags">
                             <span>Name Tags</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-crosshair">
+                        <div class="menu-item" data-action="crosshair">
                             <span>Crosshair</span>
                             <span class="checkbox"></span>
                         </div>
-                        <div class="menu-item" data-action="player-fastrun">
+                        <div class="menu-item" data-action="fast_run">
                             <span>Fast Run</span>
                             <span class="checkbox"></span>
                         </div>
@@ -704,6 +704,7 @@
     </div>
 
 <script>
+    // Listen for messages from Lua
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
@@ -716,6 +717,7 @@
             document.dispatchEvent(e);
         }
     });
+
     document.addEventListener('DOMContentLoaded', () => {
         const menuItemsContainer = document.getElementById('menuItems');
         const selector = document.getElementById('selector');
@@ -726,17 +728,15 @@
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
         let subTabIndex = 0; 
 
-        // let selectedIndex = 0; // REMOVED: No longer needed as source of truth
         let isSubmenuActive = false;
         let currentMenu = 'main'; 
-        
         let holdInterval = null; 
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
         const MAX_VISIBLE_ITEMS = 10;
-        const NOTI_DURATION = 2000; // 2 seconds for visibility
-        const NOTI_TRANSITION = 300; // 0.3 seconds for fade/slide
+        const NOTI_DURATION = 2000;
+        const NOTI_TRANSITION = 300;
 
         const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
         const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
@@ -746,33 +746,25 @@
             'appearance': appearanceSubmenuItems
         };
         let currentItems = mainMenuItems;
-        currentItems[0].classList.add('selected'); // first item selected at start
+        currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // Function to get current selection info
-        function getCurrentSelectionInfo() {
-            const selectedItem = document.querySelector('.menu-item.selected');
-            if (!selectedItem) return null;
-            const action = selectedItem.dataset.action;
-            const index = Array.from(currentItems).indexOf(selectedItem);
-            return {
-                menu: currentMenu,
-                index: index,
-                action: action,
-                itemText: selectedItem.querySelector('span').textContent
-            };
-        }
-
-        // Function to send selection info to Lua
+        // NEW: Function to send current selection back to Lua
         function sendSelectionToLua() {
-            const selectionInfo = getCurrentSelectionInfo();
-            if (selectionInfo) {
-                // Use console.log to send info that Lua can capture
-                console.log(`MENU_SELECTION:${JSON.stringify(selectionInfo)}`);
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (selectedItem) {
+                const index = Array.from(currentItems).indexOf(selectedItem);
+                const message = {
+                    type: 'selection_update',
+                    menu: currentMenu,
+                    index: index,
+                    action: selectedItem.dataset.action,
+                    itemText: selectedItem.querySelector('span').textContent
+                };
+                console.log('LUA_UPDATE:' + JSON.stringify(message));
             }
         }
 
-        // --- Menu Bar Tab Visibility and Active State ---
         function updateMenuBar() {
             if (currentMenu === 'main') {
                 mainMenuTab.classList.add('main-active');
@@ -791,24 +783,19 @@
             }
         }
 
-        // --- Scroll Indicator Logic ---
         function updateScrollIndicator() {
             const menuHeight = menuItemsContainer.clientHeight;
             scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
-
             const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
-            
             const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
             const totalContentHeight = numItems * itemHeight;
             
-            // If there are less than MAX_VISIBLE_ITEMS, set thumb to full height
             let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
                 ? thumbTrackHeight
                 : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight);
             scrollThumb.style.height = `${thumbHeight}px`;
 
             const maxThumbTravel = thumbTrackHeight - thumbHeight;
-            
             let scrollPercentage = 0;
             if (numItems > MAX_VISIBLE_ITEMS) {
                 const maxScrollTop = totalContentHeight - visibleHeight;
@@ -821,8 +808,6 @@
             scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
         }
 
-
-        // --- Notification Function (Updated for new visual style) ---
         function showNotification(action, title = 'Action Confirmed') {
             const existingNotification = document.querySelector('.notification-box');
             if (existingNotification) {
@@ -831,11 +816,10 @@
 
             const notification = document.createElement('div');
             notification.className = 'notification-box';
-            // Format the action string: 'player-godmode' -> 'Player Godmode'
-            let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ');
+            let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ').replace(/_/g, ' ');
             const htmlContent = `
                 <div class="content">
-                    <div class="icon-group">
+                                        <div class="icon-group">
                         <i class="fa-solid fa-check-circle"></i> 
                     </div>
                     <div class="text-group">
@@ -848,29 +832,24 @@
             notification.innerHTML = htmlContent;
             document.body.appendChild(notification);
             
-            // 1. Show the notification
             setTimeout(() => {
                 notification.classList.add('show');
             }, 10);
             
-            // 2. Hide the notification after NOTI_DURATION (2000ms)
             setTimeout(() => {
                 notification.classList.remove('show');
                 notification.classList.add('hide');
-                
-                // 3. Remove the element from DOM after transition completes
                 setTimeout(() => {
                     notification.remove();
                 }, NOTI_TRANSITION); 
             }, NOTI_DURATION);
         }
 
-        // --- Core Selection Logic ---
         function updateSelection() {
             const selectedItem = document.querySelector('.menu-item.selected');
             if (!selectedItem) {
                 document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
-                selector.style.transform = `translateY(-${itemHeight}px)`; // Move off-screen
+                selector.style.transform = `translateY(-${itemHeight}px)`;
                 updateScrollIndicator();
                 return;
             }
@@ -879,19 +858,12 @@
             selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
             
-            // NOTE: The main scroll management is now handled by moveSelection's scrollIntoView,
-            // but we keep this for the scroll indicator logic, which needs scrollTop.
-            // --- SCROLL MANAGEMENT LOGIC for scroll indicator ---
-            // Recalculate scroll for the scroll indicator positioning
             if (numItems > MAX_VISIBLE_ITEMS) {
                 const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
                 const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
 
                 if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
-                    // This case should primarily be handled by scrollIntoView, 
-                    // but we ensure the container's scroll is correctly set 
-                    // *before* calling updateScrollIndicator if needed.
-                    // For now, we rely on moveSelection's scrollIntoView for the actual scroll position.
+                    // Handled by scrollIntoView in moveSelection
                 }
             } else {
                 menuItemsContainer.scrollTop = 0;
@@ -900,47 +872,39 @@
             updateScrollIndicator();
         }
 
-        // This is the function responsible for moving the selection one step
+        // UPDATED: Now sends selection to Lua after every move
         function moveSelection(direction) {
             const items = currentItems;
             const current = document.querySelector('.menu-item.selected');
             let index = Array.from(items).indexOf(current);
         
-            // Remove current highlight
             if (current) current.classList.remove('selected');
             
-            // Calculate new index
             index += direction;
             if (index < 0) index = items.length - 1;
             if (index >= items.length) index = 0;
             
-            // Add new highlight
             items[index].classList.add('selected');
-            
-            // Move the selector
             selector.style.transform = `translateY(${index * itemHeight}px)`;
-            
-            // Scroll into view smoothly
             items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Update footer text
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
             
-            updateScrollIndicator(); 
+            updateScrollIndicator();
+            
+            // NEW: Send updated selection to Lua
+            sendSelectionToLua();
         }
 
         function setActiveSubTab(tabKey) {
             currentMenu = tabKey;
             subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
             
-            // Clear previous selection
             const currentlySelected = document.querySelector('.menu-item.selected');
             if (currentlySelected) currentlySelected.classList.remove('selected');
             
             currentItems = allSubmenuItems[tabKey];
             numItems = currentItems.length;
             
-            // Select first item of new menu
             if (currentItems.length > 0) {
                 currentItems[0].classList.add('selected');
             }
@@ -954,21 +918,22 @@
             
             updateMenuBar();
             updateSelection();
+            
+            // NEW: Send updated selection to Lua
+            sendSelectionToLua();
         }
 
         function switchToSubmenu() {
             const selectedItem = document.querySelector('.menu-item.selected');
             if (!selectedItem || selectedItem.dataset.action !== 'player') return;
 
-            // Clear main menu selection
             selectedItem.classList.remove('selected');
             isSubmenuActive = true;
             menuItemsContainer.classList.add('submenu-active');
-            setActiveSubTab('player'); // Default to player submenu
+            setActiveSubTab('player');
         }
 
         function switchToMainMenu() {
-            // Clear submenu selection
             const currentlySelected = document.querySelector('.menu-item.selected');
             if (currentlySelected) currentlySelected.classList.remove('selected');
 
@@ -981,15 +946,16 @@
             currentItems = mainMenuItems;
             numItems = mainMenuItems.length;
             
-            // Select first item of main menu
             currentItems[0].classList.add('selected');
             menuItemsContainer.scrollTop = 0; 
             
             updateMenuBar();
             updateSelection();
+            
+            // NEW: Send updated selection to Lua
+            sendSelectionToLua();
         }
 
-        // --- Tab Switching Logic (Q and E) ---
         function switchSubTab(direction) {
             if (!isSubmenuActive) return;
             let newIndex = subTabIndex + direction;
@@ -1003,70 +969,57 @@
             setActiveSubTab(subTabs[newIndex].dataset.tabKey);
         }
 
-
-        // --- Checkbox Toggle Logic ---
         function toggleCheckbox(item) {
             const checkbox = item.querySelector('.checkbox');
             if (checkbox) {
                 checkbox.classList.toggle('on');
                 const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
-                
-                // ONLY CALL showNotification for toggle actions
                 showNotification(item.dataset.action, state);
             }
         }
 
-        // --- Execute Action Logic ---
         function executeAction(action) {
             // Non-toggle actions
         }
 
-        // --- Keyboard Controls ---
+        // Keyboard event handlers
         document.addEventListener('keydown', (e) => {
-            // Arrow key navigation without postMessage
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
-                
-                // If already holding, do nothing
                 if (holdInterval) return;
 
                 const direction = e.key === 'ArrowDown' ? 1 : -1;
-
-                // Move once immediately
                 moveSelection(direction);
                 
-                // Start interval to keep moving while key is held
-                // ** THIS IS THE ONLY LINE CHANGED FROM YOUR ORIGINAL FILE **
                 holdInterval = setInterval(() => {
                     moveSelection(direction);
-                }, 200); // SET TO 200ms FOR NORMAL SCROLL SPEED
+                }, 200);
             } 
-            
             else if (e.key === 'Enter') {
                 e.preventDefault();
-                
-                // Prevent repeat action when holding Enter
                 if (e.repeat) return;
 
                 const selectedItem = document.querySelector('.menu-item.selected');
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
 
-                // Send current selection to Lua before processing
-                sendSelectionToLua();
+                // NEW: Send action to Lua instead of processing locally
+                console.log('LUA_ACTION:' + JSON.stringify({
+                    type: 'action',
+                    menu: currentMenu,
+                    action: action,
+                    itemText: selectedItem.querySelector('span').textContent
+                }));
 
+                // Keep local UI updates for checkboxes and submenu navigation
                 if (currentMenu === 'main') {
-                    // All main menu items are category buttons
                     if (action === 'player') {
                         switchToSubmenu();
                     }
                 } else if (isSubmenuActive) {
-                    // Submenu item action
                     if (selectedItem.querySelector('.checkbox')) {
-                        // This will call showNotification internally
                         toggleCheckbox(selectedItem); 
                     } else {
-                        // Actions like Revive/Randomize Outfit will execute but NOT show a generic notification
                         executeAction(action); 
                     }
                 } 
@@ -1075,8 +1028,6 @@
                 switchToMainMenu(); 
             } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
                 e.preventDefault();
-                
-                // Prevent repeat action when holding Q or E
                 if (e.repeat) return; 
                 
                 const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
@@ -1084,7 +1035,6 @@
             }
         });
         
-        // Keyup to clear the interval for continuous movement
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 clearInterval(holdInterval);
@@ -1092,11 +1042,12 @@
             }
         });
 
-
-        // Initialize
+        // Initialize and send initial state to Lua
         updateMenuBar();
         updateSelection();
+        sendSelectionToLua(); // Send initial selection
     });
 </script>
+
 </body>
 </html>
