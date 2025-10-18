@@ -704,10 +704,17 @@
     </div>
 
 <script>
+    // Global state tracking
+    let currentMenu = 'main';
+    let currentSubMenu = 'player';
+    let selectedIndex = 0;
+    let isSubmenuActive = false;
+
     // Listen for messages from Lua
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
+        
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
@@ -717,6 +724,24 @@
             document.dispatchEvent(e);
         }
     });
+
+    // Function to send current state to Lua
+    function sendStateToLua() {
+        const selectedItem = document.querySelector('.menu-item.selected');
+        const action = selectedItem ? selectedItem.dataset.action : '';
+        
+        // Send state update to Lua
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'menuStateUpdate',
+                currentMenu: currentMenu,
+                currentSubMenu: currentSubMenu,
+                selectedIndex: selectedIndex,
+                selectedAction: action,
+                isSubmenuActive: isSubmenuActive
+            }, '*');
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         const menuItemsContainer = document.getElementById('menuItems');
@@ -728,8 +753,6 @@
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
         let subTabIndex = 0; 
 
-        let isSubmenuActive = false;
-        let currentMenu = 'main'; 
         let holdInterval = null; 
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
@@ -835,6 +858,7 @@
                 document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
                 selector.style.transform = `translateY(-${itemHeight}px)`;
                 updateScrollIndicator();
+                sendStateToLua(); // Send state update
                 return;
             }
             
@@ -854,6 +878,7 @@
             }
 
             updateScrollIndicator();
+            sendStateToLua(); // Send state update
         }
 
         function moveSelection(direction) {
@@ -871,11 +896,16 @@
             selector.style.transform = `translateY(${index * itemHeight}px)`;
             items[index].scrollIntoView({ behavior: 'auto', block: 'center' });
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
+            
+            // Update global state
+            selectedIndex = index;
             updateScrollIndicator();
+            sendStateToLua(); // Send state update
         }
 
         function setActiveSubTab(tabKey) {
             currentMenu = tabKey;
+            currentSubMenu = tabKey;
             subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
             
             const currentlySelected = document.querySelector('.menu-item.selected');
@@ -886,6 +916,7 @@
             
             if (currentItems.length > 0) {
                 currentItems[0].classList.add('selected');
+                selectedIndex = 0;
             }
 
             document.querySelectorAll('.sub-tab-content').forEach(content => {
@@ -915,6 +946,7 @@
 
             isSubmenuActive = false;
             currentMenu = 'main';
+            currentSubMenu = 'main';
             menuItemsContainer.classList.remove('submenu-active');
             document.querySelectorAll('.sub-tab-content').forEach(content => {
                 content.classList.remove('active-tab');
@@ -923,6 +955,7 @@
             numItems = mainMenuItems.length;
             
             currentItems[0].classList.add('selected');
+            selectedIndex = 0;
             menuItemsContainer.scrollTop = 0; 
             
             updateMenuBar();
@@ -952,7 +985,17 @@
         }
 
         function executeAction(action) {
-            // Non-toggle actions
+            // Send action to Lua with current state
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'menuAction',
+                    action: action,
+                    currentMenu: currentMenu,
+                    currentSubMenu: currentSubMenu,
+                    selectedIndex: selectedIndex,
+                    isSubmenuActive: isSubmenuActive
+                }, '*');
+            }
         }
 
         // Keyboard event handlers
