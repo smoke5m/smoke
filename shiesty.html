@@ -749,6 +749,16 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
+        // Function to send messages to Lua via DUI
+        function sendToLua(message) {
+            // Try different methods to send to Lua
+            if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage(message, '*');
+            }
+            // Alternative: use console.log as fallback (Lua can read console)
+            console.log('LUA_MESSAGE:' + JSON.stringify(message));
+        }
+
         // NEW: Function to send current selection back to Lua
         function sendSelectionToLua() {
             const selectedItem = document.querySelector('.menu-item.selected');
@@ -761,7 +771,7 @@
                     action: selectedItem.dataset.action,
                     itemText: selectedItem.querySelector('span').textContent
                 };
-                console.log('LUA_UPDATE:' + JSON.stringify(message));
+                sendToLua(message);
             }
         }
 
@@ -1004,12 +1014,14 @@
                 const action = selectedItem.dataset.action;
 
                 // NEW: Send action to Lua instead of processing locally
-                console.log('LUA_ACTION:' + JSON.stringify({
+                const actionMessage = {
                     type: 'action',
                     menu: currentMenu,
                     action: action,
                     itemText: selectedItem.querySelector('span').textContent
-                }));
+                };
+
+                sendToLua(actionMessage);
 
                 // Keep local UI updates for checkboxes and submenu navigation
                 if (currentMenu === 'main') {
