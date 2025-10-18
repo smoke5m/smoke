@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -704,17 +704,10 @@
     </div>
 
 <script>
-    // Global state tracking
-    let currentMenu = 'main';
-    let currentSubMenu = 'player';
-    let selectedIndex = 0;
-    let isSubmenuActive = false;
-
     // Listen for messages from Lua
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
-        
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
@@ -722,118 +715,8 @@
                 bubbles: true
             });
             document.dispatchEvent(e);
-        } else if (data.type === 'update') {
-            // Update UI state from Lua
-            currentMenu = data.currentMenu || 'main';
-            currentSubMenu = data.currentSubMenu || 'player';
-            selectedIndex = data.selectedIndex || 0;
-            isSubmenuActive = data.isSubmenuActive || false;
-            
-            // Update UI to match Lua state
-            updateUIFromLuaState();
         }
     });
-
-    // Function to execute action by calling Lua function directly
-    function executeAction(action) {
-        // Use MachoExecuteDuiScript to call Lua functions
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-                type: 'executeAction',
-                action: action,
-                currentMenu: currentMenu,
-                currentSubMenu: currentSubMenu,
-                selectedIndex: selectedIndex,
-                isSubmenuActive: isSubmenuActive
-            }, '*');
-        }
-    }
-
-    // Function to update UI to match Lua state
-    function updateUIFromLuaState() {
-        const menuItemsContainer = document.getElementById('menuItems');
-        const selector = document.getElementById('selector');
-        const mainMenuTab = document.getElementById('mainMenuTab');
-        const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
-        
-        // Update menu bar
-        if (currentMenu === 'main') {
-            mainMenuTab.classList.add('main-active');
-            mainMenuTab.style.display = 'flex'; 
-            subTabs.forEach(tab => tab.style.display = 'none');
-            menuItemsContainer.classList.remove('submenu-active');
-        } else if (isSubmenuActive) {
-            mainMenuTab.classList.remove('main-active');
-            mainMenuTab.style.display = 'none'; 
-            subTabs.forEach(tab => {
-                tab.style.display = 'flex'; 
-                tab.classList.remove('active');
-            });
-            
-            // Find the correct sub-tab index
-            const subMenus = ['player', 'appearance'];
-            const subTabIndex = subMenus.indexOf(currentSubMenu);
-            if (subTabIndex >= 0 && subTabs[subTabIndex]) {
-                subTabs[subTabIndex].classList.add('active');
-            }
-            
-            menuItemsContainer.classList.add('submenu-active');
-        }
-        
-        // Update submenu content
-        document.querySelectorAll('.sub-tab-content').forEach(content => {
-            content.classList.remove('active-tab');
-        });
-        
-        if (isSubmenuActive && currentSubMenu) {
-            const activeSubmenu = document.getElementById(`${currentSubMenu}Submenu`);
-            if (activeSubmenu) {
-                activeSubmenu.classList.add('active-tab');
-            }
-        }
-        
-        // Update selection
-        updateSelectionFromLua();
-    }
-
-    // Function to update selection based on Lua state
-    function updateSelectionFromLua() {
-        const menuItemsContainer = document.getElementById('menuItems');
-        const selector = document.getElementById('selector');
-        
-        // Remove all selected classes
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        
-        // Get current items based on menu state
-        let currentItems = [];
-        if (currentMenu === 'main') {
-            currentItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
-        } else if (isSubmenuActive) {
-            const activeSubmenu = document.getElementById(`${currentSubMenu}Submenu`);
-            if (activeSubmenu) {
-                currentItems = Array.from(activeSubmenu.querySelectorAll('.menu-item'));
-            }
-        }
-        
-        // Set selected item
-        if (currentItems.length > 0 && selectedIndex >= 0 && selectedIndex < currentItems.length) {
-            currentItems[selectedIndex].classList.add('selected');
-            
-            // Update selector position
-            const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
-            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
-            
-            // Update footer counter
-            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${currentItems.length}`;
-            
-            // Scroll into view if needed
-            currentItems[selectedIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
-        }
-        
-        updateScrollIndicator();
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
         const menuItemsContainer = document.getElementById('menuItems');
@@ -845,6 +728,8 @@
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
         let subTabIndex = 0; 
 
+        let isSubmenuActive = false;
+        let currentMenu = 'main'; 
         let holdInterval = null; 
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
@@ -863,6 +748,26 @@
         let currentItems = mainMenuItems;
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
+
+        // Function to send action to Lua via window.postMessage
+        function sendActionToLua(action, menu) {
+            const message = {
+                type: 'action',
+                action: action,
+                menu: menu
+            };
+            window.postMessage(message, '*');
+        }
+
+        // NEW: Function to send selection updates to Lua
+        function sendSelectionToLua(index, menu) {
+            const message = {
+                type: 'selection',
+                index: index,
+                menu: menu
+            };
+            window.postMessage(message, '*');
+        }
 
         function updateMenuBar() {
             if (currentMenu === 'main') {
@@ -986,15 +891,14 @@
             selector.style.transform = `translateY(${index * itemHeight}px)`;
             items[index].scrollIntoView({ behavior: 'auto', block: 'center' });
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
-            
-            // Update global state
-            selectedIndex = index;
             updateScrollIndicator();
+            
+            // Send selection update to Lua
+            sendSelectionToLua(index, currentMenu);
         }
 
         function setActiveSubTab(tabKey) {
             currentMenu = tabKey;
-            currentSubMenu = tabKey;
             subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
             
             const currentlySelected = document.querySelector('.menu-item.selected');
@@ -1005,7 +909,6 @@
             
             if (currentItems.length > 0) {
                 currentItems[0].classList.add('selected');
-                selectedIndex = 0;
             }
 
             document.querySelectorAll('.sub-tab-content').forEach(content => {
@@ -1017,6 +920,9 @@
             
             updateMenuBar();
             updateSelection();
+            
+            // Send menu change to Lua
+            sendSelectionToLua(0, currentMenu);
         }
 
         function switchToSubmenu() {
@@ -1035,7 +941,6 @@
 
             isSubmenuActive = false;
             currentMenu = 'main';
-            currentSubMenu = 'main';
             menuItemsContainer.classList.remove('submenu-active');
             document.querySelectorAll('.sub-tab-content').forEach(content => {
                 content.classList.remove('active-tab');
@@ -1044,11 +949,13 @@
             numItems = mainMenuItems.length;
             
             currentItems[0].classList.add('selected');
-            selectedIndex = 0;
             menuItemsContainer.scrollTop = 0; 
             
             updateMenuBar();
             updateSelection();
+            
+            // Send menu change to Lua
+            sendSelectionToLua(0, currentMenu);
         }
 
         function switchSubTab(direction) {
@@ -1073,6 +980,10 @@
             }
         }
 
+        function executeAction(action) {
+            // Non-toggle actions
+        }
+
         // Keyboard event handlers
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -1093,6 +1004,9 @@
                 const selectedItem = document.querySelector('.menu-item.selected');
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
+
+                // Send action to Lua
+                sendActionToLua(action, currentMenu);
 
                 // Keep local UI updates for checkboxes and submenu navigation
                 if (currentMenu === 'main') {
@@ -1128,6 +1042,9 @@
         // Initialize
         updateMenuBar();
         updateSelection();
+        
+        // Send initial selection to Lua
+        sendSelectionToLua(0, currentMenu);
     });
 </script>
 
