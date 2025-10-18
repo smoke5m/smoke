@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -977,11 +977,18 @@
                 checkbox.classList.toggle('on');
                 const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
                 showNotification(item.dataset.action, state);
+                
+                // Send action to Lua
+                sendActionToLua(item.dataset.action, currentMenu);
             }
         }
 
         function executeAction(action) {
-            // Non-toggle actions
+            // Send action to Lua
+            sendActionToLua(action, currentMenu);
+            
+            // Show notification
+            showNotification(action);
         }
 
         // Keyboard event handlers
