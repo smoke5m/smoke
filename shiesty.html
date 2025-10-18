@@ -749,26 +749,6 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // Function to send action to Lua via window.postMessage
-        function sendActionToLua(action, menu) {
-            const message = {
-                type: 'action',
-                action: action,
-                menu: menu
-            };
-            window.postMessage(message, '*');
-        }
-
-        // NEW: Function to send selection updates to Lua
-        function sendSelectionToLua(index, menu) {
-            const message = {
-                type: 'selection',
-                index: index,
-                menu: menu
-            };
-            window.postMessage(message, '*');
-        }
-
         function updateMenuBar() {
             if (currentMenu === 'main') {
                 mainMenuTab.classList.add('main-active');
@@ -892,9 +872,6 @@
             items[index].scrollIntoView({ behavior: 'auto', block: 'center' });
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
             updateScrollIndicator();
-            
-            // Send selection update to Lua
-            sendSelectionToLua(index, currentMenu);
         }
 
         function setActiveSubTab(tabKey) {
@@ -920,9 +897,6 @@
             
             updateMenuBar();
             updateSelection();
-            
-            // Send menu change to Lua
-            sendSelectionToLua(0, currentMenu);
         }
 
         function switchToSubmenu() {
@@ -953,9 +927,6 @@
             
             updateMenuBar();
             updateSelection();
-            
-            // Send menu change to Lua
-            sendSelectionToLua(0, currentMenu);
         }
 
         function switchSubTab(direction) {
@@ -1005,9 +976,6 @@
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
 
-                // Send action to Lua
-                sendActionToLua(action, currentMenu);
-
                 // Keep local UI updates for checkboxes and submenu navigation
                 if (currentMenu === 'main') {
                     if (action === 'player') {
@@ -1042,9 +1010,6 @@
         // Initialize
         updateMenuBar();
         updateSelection();
-        
-        // Send initial selection to Lua
-        sendSelectionToLua(0, currentMenu);
     });
 </script>
 
