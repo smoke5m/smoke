@@ -2,33 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SHIESTY Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
         /* --- Root Variables --- */
         :root {
-            --color-menu-bg: #00000079; /* Dark gray body */
-            --color-highlight-pink: #e100ff; /* Pink highlight */
-            --color-highlight-purple: #800080; /* Purple for header */
-            --color-black-section: #0A0A0A; /* Deep black tab/footer */
+            --color-menu-bg: #00000079;
+            --color-highlight-pink: #e100ff;
+            --color-highlight-purple: #800080;
+            --color-black-section: #0A0A0A;
             --color-text-bright: #FFFFFF;
-            --item-height: 26px; /* Shorter item height */ 
-            --selector-height: 27px; /* Thinner selector height */
+            --item-height: 26px;
+            --selector-height: 27px;
             --menu-width: 320px;
             --checkbox-off-color: #ffffff;
             --checkbox-on-color: #f500f0;
             --checkbox-bg: #181818;
             --checkbox-on-bg: #181818;
-            /* New variables for scrollbar */
-            --scrollbar-width: 8px; /* Increased scrollbar width (thicker) */
-            --arrow-height: 8px; /* Height of the arrow icon area */
-            --menu-padding-y: 2px; /* Padding inside menu-items container */
+            --scrollbar-width: 8px;
+            --arrow-height: 8px;
+            --menu-padding-y: 2px;
             --scrollbar-margin: 5px;
-            /* The calculated height */
             --visible-content-height: calc(var(--item-height) * 10 + (var(--menu-padding-y) * 2));
-            /* --- NOTIFICATION VARIABLES --- */
             --noti-path-color: #0af;
             --path-thickness: 2px;
             --cycle-duration: 2s;
@@ -38,7 +35,6 @@
             --noti-padding: 10px;
         }
 
-        /* --- Global Setup --- */
         body {
             margin: 0;
             height: 100vh;
@@ -51,7 +47,6 @@
             padding-left: 20px;
         }
 
-        /* --- Main Menu Container --- */
         .menu-container {
             position: fixed;
             top: 50%;
@@ -88,7 +83,6 @@
             margin-top:5px;
             max-height: var(--visible-content-height);
             overflow-y: auto;
-            /* keep smooth for single-step navigation */
             scroll-behavior: smooth;
             scrollbar-width:none;
         }
@@ -109,7 +103,6 @@
         }
         .menu-item i { font-size:0.7em; }
 
-        /* Selector: increase z-index so it's visible above background but behind text */
         .selector {
             position:absolute;
             left:0;
@@ -118,14 +111,12 @@
             transition: transform .25s ease;
             background: rgba(168,0,154,0.56);
             border-radius:4px;
-            z-index: 1; /* changed from 0 to 1 so it shows properly */
+            z-index: 1;
             box-shadow: 0 0 4px 2px rgba(255,0,234,0.82);
         }
 
-        /* ensure text sits above selector */
         .menu-item span, .menu-item i { position: relative; z-index: 2; }
 
-        /* scroll indicator styles (unchanged) */
         .scroll-indicator-wrapper { position:absolute; top:130px; left: calc(-55% + (var(--menu-width)/2) + var(--scrollbar-margin) - 5px); width:var(--scrollbar-width); z-index:3; background:#000000; border-radius:3px; padding-top:var(--arrow-height); padding-bottom:var(--arrow-height); display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
         .scroll-indicator-arrow { position:absolute; width:110%; height:var(--arrow-height); background:#000000; display:flex; justify-content:center; align-items:center; color:white; font-size:8px; }
         .scroll-indicator-arrow.top { top:0; border-top-left-radius:3px; border-top-right-radius:3px; }
@@ -133,7 +124,6 @@
         .scroll-indicator-bar { position:relative; height:100%; width:110%; background:#000000; border-radius:0; }
         .scroll-thumb { position:absolute; top:0; left:0; width:90%; background:#e100ff; border-radius:2px; transition: transform .25s ease, height .25s ease; box-shadow:0 0 8px #e100ff; }
 
-        /* checkbox and footer styles are same as original (omitted for brevity in this comment block) */
         .checkbox { width:30px; height:14px; background:var(--checkbox-bg); border-radius:20px; position:relative; flex-shrink:0; transition: background .08s linear; pointer-events:none; }
         .checkbox::after { content:""; position:absolute; top:1px; left:1px; width:12px; height:12px; border-radius:50%; background:var(--checkbox-off-color); transition: transform .08s linear, background .08s linear; }
         .checkbox.on{ background:var(--checkbox-on-bg); }
@@ -146,7 +136,6 @@
         .footer-info { color:#C0C0C0; white-space:nowrap; }
         .menu-footer .right { font-weight:500; white-space:nowrap; }
 
-        /* submenu styles remain same */
         .main-menu { display:block; }
         .submenu > div { display:none; }
         .submenu-active .main-menu { display:none; }
@@ -154,7 +143,6 @@
         .submenu-active .menu-bar-tab.main-active { display:none !important; }
         .submenu-active .menu-bar-sub-tab { display:flex; }
 
-        /* notification styles unchanged */
         .notification-box { position:fixed; bottom:20px; right:20px; opacity:0; transform:translateX(100%); transition: opacity .3s ease-out, transform .3s ease-out; width:var(--noti-width); height:var(--noti-height); background:#000; border-radius:5px; color:#fff; padding:var(--noti-padding); box-sizing:border-box; overflow:hidden; border:1px solid #111; z-index:1000; }
         .notification-box.show { opacity:1; transform:translateX(0); }
         .notification-box.hide { opacity:0; transform:translateX(100%); }
@@ -172,8 +160,7 @@
         @keyframes move-h { 0%{ transform:scaleX(1);} 100%{ transform:scaleX(0);} }
         @keyframes move-v { 0%{ transform:scaleY(1);} 100%{ transform:scaleY(0);} }
 
-        /* keep the selected marker style separate (we use the .selector element for visuals) */
-        .menu-item.selected { /* intentionally blank; visual handled by .selector */ }
+        .menu-item.selected { /* visual handled by .selector */ }
     </style>
 </head>
 <body>
@@ -181,7 +168,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">SHIESTY</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -256,17 +243,17 @@
     </div>
 
 <script>
-    // Listen for messages from Lua
+    // Listen for messages from Lua (if needed)
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
-        if (data.type === 'update') {
-            setMenu(data.menu);
-            setSelection(data.index);
-            updateCheckboxes(data.states);
-            updateScrollIndicator();
-        } else if (data.type === 'show_notification') {
-            showNotification(data.action, data.title);
+        if (data.type === 'keydown' || data.type === 'keyup') {
+            const e = new KeyboardEvent(data.type, {
+                key: data.key || '',
+                keyCode: data.keyCode,
+                bubbles: true
+            });
+            document.dispatchEvent(e);
         }
     });
 
@@ -274,12 +261,15 @@
         const menuItemsContainer = document.getElementById('menuItems');
         const selector = document.getElementById('selector');
         const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
-        const scrollIndicatorBar = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar'); 
         const scrollThumb = document.getElementById('scrollThumb'); 
         const mainMenuTab = document.getElementById('mainMenuTab');
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
+        let subTabIndex = 0; 
+
+        let isSubmenuActive = false;
         let currentMenu = 'main'; 
-        let selectedIndex = 0;
+        let holdInterval = null;
+        let isHolding = false; // tracks if arrow key is held for auto-repeat
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
@@ -292,7 +282,31 @@
         const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
         const allSubmenuItems = { 'player': playerSubmenuItems, 'appearance': appearanceSubmenuItems };
         let currentItems = mainMenuItems;
+        currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
+
+        function sendToLua(message) {
+            if (window.parent && window.parent.postMessage) {
+                // send as an object (the runtime will deliver to Lua)
+                window.parent.postMessage(message, '*');
+            }
+            console.log('LUA_MESSAGE:' + JSON.stringify(message));
+        }
+
+        function sendSelectionToLua() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (selectedItem) {
+                const index = Array.from(currentItems).indexOf(selectedItem);
+                const message = {
+                    type: 'selection_update',
+                    menu: currentMenu,
+                    index: index,
+                    action: selectedItem.dataset.action,
+                    itemText: selectedItem.querySelector('span').textContent
+                };
+                sendToLua(message);
+            }
+        }
 
         function updateMenuBar() {
             if (currentMenu === 'main') {
@@ -300,12 +314,11 @@
                 mainMenuTab.style.display = 'flex'; 
                 subTabs.forEach(tab => tab.style.display = 'none');
                 menuItemsContainer.classList.remove('submenu-active');
-            } else {
+            } else if (isSubmenuActive) {
                 mainMenuTab.classList.remove('main-active');
                 mainMenuTab.style.display = 'none'; 
                 subTabs.forEach(tab => { tab.style.display = 'flex'; tab.classList.remove('active'); });
-                const activeTab = Array.from(subTabs).find(tab => tab.dataset.tabKey === currentMenu);
-                if (activeTab) activeTab.classList.add('active');
+                subTabs[subTabIndex].classList.add('active');
                 menuItemsContainer.classList.add('submenu-active');
             }
         }
@@ -313,7 +326,7 @@
         function updateScrollIndicator() {
             const menuHeight = menuItemsContainer.clientHeight;
             scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
-            const thumbTrackHeight = scrollIndicatorBar.clientHeight; 
+            const thumbTrackHeight = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar').clientHeight; 
             const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
             const totalContentHeight = numItems * itemHeight;
             
@@ -362,64 +375,230 @@
             }, NOTI_DURATION);
         }
 
-        function setMenu(menu) {
-            if (currentMenu === menu) return;
-            currentMenu = menu;
-            updateMenuBar();
-            document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
-            if (menu !== 'main') {
-                document.getElementById(`${menu}Submenu`).classList.add('active-tab');
+        function updateSelection() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem) {
+                document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
+                selector.style.transform = `translateY(-${itemHeight}px)`;
+                updateScrollIndicator();
+                return;
             }
-            currentItems = menu === 'main' ? mainMenuItems : allSubmenuItems[menu];
-            numItems = currentItems.length;
-            menuItemsContainer.scrollTop = 0;
+            
+            const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
+            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
+            
+            if (numItems > MAX_VISIBLE_ITEMS) {
+                const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
+                const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
+                if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
+                    // will be handled when moving selection
+                }
+            } else {
+                menuItemsContainer.scrollTop = 0;
+            }
+            updateScrollIndicator();
         }
 
-        function setSelection(index) {
+        // moveSelection uses isHolding to decide instant vs smooth scroll and to temporarily disable selector transitions
+        function moveSelection(direction) {
+            const items = currentItems;
             const current = document.querySelector('.menu-item.selected');
+            let index = Array.from(items).indexOf(current);
             if (current) current.classList.remove('selected');
             
-            selectedIndex = index;
-            if (selectedIndex < 0 || selectedIndex >= numItems) selectedIndex = 0;
+            index += direction;
+            if (index < 0) index = items.length - 1;
+            if (index >= items.length) index = 0;
             
-            const selectedItem = currentItems[selectedIndex];
-            if (selectedItem) selectedItem.classList.add('selected');
+            items[index].classList.add('selected');
 
-            selector.style.transition = 'transform .25s ease';
-            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+            if (isHolding) {
+                selector.style.transition = 'none';
+            } else {
+                selector.style.transition = 'transform .25s ease';
+            }
 
-            // Scroll to center the item
+            selector.style.transform = `translateY(${index * itemHeight}px)`;
+
+            const scrollBehavior = isHolding ? 'auto' : 'smooth';
             try {
-                selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                items[index].scrollIntoView({ behavior: scrollBehavior, block: 'center' });
             } catch (err) {
-                const desiredTop = selectedIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
+                const desiredTop = index * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
                 menuItemsContainer.scrollTop = Math.max(0, desiredTop);
             }
 
-            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
+            document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
+            updateScrollIndicator();
+            sendSelectionToLua();
         }
 
-        function updateCheckboxes(states) {
-            document.querySelectorAll('.menu-item .checkbox').forEach(checkbox => {
-                const item = checkbox.closest('.menu-item');
+        function setActiveSubTab(tabKey) {
+            currentMenu = tabKey;
+            subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+            
+            currentItems = allSubmenuItems[tabKey];
+            numItems = currentItems.length;
+            if (currentItems.length > 0) currentItems[0].classList.add('selected');
+
+            document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
+            document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
+
+            menuItemsContainer.scrollTop = 0;
+            updateMenuBar();
+            updateSelection();
+            sendSelectionToLua();
+        }
+
+        function switchToSubmenu() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem || selectedItem.dataset.action !== 'player') return;
+            selectedItem.classList.remove('selected');
+            isSubmenuActive = true;
+            menuItemsContainer.classList.add('submenu-active');
+            setActiveSubTab('player');
+        }
+
+        function switchToMainMenu() {
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+
+            isSubmenuActive = false;
+            currentMenu = 'main';
+            menuItemsContainer.classList.remove('submenu-active');
+            document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
+            currentItems = mainMenuItems;
+            numItems = mainMenuItems.length;
+            currentItems[0].classList.add('selected');
+            menuItemsContainer.scrollTop = 0;
+            updateMenuBar();
+            updateSelection();
+            sendSelectionToLua();
+        }
+
+        function switchSubTab(direction) {
+            if (!isSubmenuActive) return;
+            let newIndex = subTabIndex + direction;
+            if (newIndex < 0) newIndex = subTabs.length - 1;
+            else if (newIndex >= subTabs.length) newIndex = 0;
+            setActiveSubTab(subTabs[newIndex].dataset.tabKey);
+        }
+
+        function toggleCheckbox(item) {
+            const checkbox = item.querySelector('.checkbox');
+            if (checkbox) {
+                checkbox.classList.toggle('on');
+                const state = checkbox.classList.contains('on');
                 const action = item.dataset.action;
-                if (states[action] !== undefined) {
-                    if (states[action]) {
-                        checkbox.classList.add('on');
-                    } else {
-                        checkbox.classList.remove('on');
+                showNotification(action, state ? 'Enabled' : 'Disabled');
+
+                // send action with explicit state to Lua
+                const message = {
+                    type: 'action',
+                    menu: currentMenu,
+                    action: action,
+                    state: state,
+                    itemText: item.querySelector('span').textContent
+                };
+                sendToLua(message);
+            }
+        }
+
+        function executeAction(action) {
+            // non-toggle actions: send action to Lua (no state)
+            const message = { type: 'action', menu: currentMenu, action: action };
+            sendToLua(message);
+            showNotification(action);
+        }
+
+        // KEY HANDLERS: now handle hold-behavior with isHolding and clear/restore selector transition on keyup
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (holdInterval) return;
+
+                isHolding = true;
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+                moveSelection(direction);
+
+                // auto-repeat while key is held
+                holdInterval = setInterval(() => {
+                    moveSelection(direction);
+                }, 120);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.repeat) return;
+                const selectedItem = document.querySelector('.menu-item.selected');
+                if (!selectedItem) return;
+                const action = selectedItem.dataset.action;
+
+                // For main menu player entry, open submenu locally
+                if (currentMenu === 'main') {
+                    // send action to Lua too (so Lua can log or react if needed)
+                    sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
+                    if (action === 'player') {
+                        switchToSubmenu();
+                        return;
                     }
                 }
-            });
-        }
+
+                if (isSubmenuActive) {
+                    if (selectedItem.querySelector('.checkbox')) {
+                        // toggle visually first, then send state to Lua (toggleCheckbox does both)
+                        toggleCheckbox(selectedItem);
+                    } else {
+                        // non-checkbox action
+                        executeAction(action);
+                    }
+                } else {
+                    // main menu action that isn't submenu (send)
+                    executeAction(action);
+                }
+            } else if (e.key === 'Backspace' && isSubmenuActive) {
+                e.preventDefault();
+                switchToMainMenu();
+            } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+                e.preventDefault();
+                if (e.repeat) return;
+                const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
+                switchSubTab(direction);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                clearInterval(holdInterval);
+                holdInterval = null;
+
+                isHolding = false;
+                requestAnimationFrame(() => {
+                    selector.style.transition = 'transform .25s ease';
+                    updateSelection();
+                    updateScrollIndicator();
+                });
+            }
+        });
 
         // initialize
         updateMenuBar();
-        setSelection(0);
+        updateSelection();
+        sendSelectionToLua();
         updateScrollIndicator();
 
         // Keep scroll indicator in sync if user scrolls with mouse/wheel
-        menuItemsContainer.addEventListener('scroll', updateScrollIndicator);
+        menuItemsContainer.addEventListener('scroll', () => {
+            updateScrollIndicator();
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (selectedItem) {
+                const idx = Array.from(currentItems).indexOf(selectedItem);
+                selector.style.transition = 'none';
+                selector.style.transform = `translateY(${idx * itemHeight}px)`;
+                requestAnimationFrame(() => selector.style.transition = 'transform .25s ease');
+            }
+        });
     });
 </script>
 
