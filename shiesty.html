@@ -722,25 +722,117 @@
                 bubbles: true
             });
             document.dispatchEvent(e);
+        } else if (data.type === 'update') {
+            // Update UI state from Lua
+            currentMenu = data.currentMenu || 'main';
+            currentSubMenu = data.currentSubMenu || 'player';
+            selectedIndex = data.selectedIndex || 0;
+            isSubmenuActive = data.isSubmenuActive || false;
+            
+            // Update UI to match Lua state
+            updateUIFromLuaState();
         }
     });
 
-    // Function to send current state to Lua
-    function sendStateToLua() {
-        const selectedItem = document.querySelector('.menu-item.selected');
-        const action = selectedItem ? selectedItem.dataset.action : '';
-        
-        // Send state update to Lua
+    // Function to execute action by calling Lua function directly
+    function executeAction(action) {
+        // Use MachoExecuteDuiScript to call Lua functions
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({
-                type: 'menuStateUpdate',
+                type: 'executeAction',
+                action: action,
                 currentMenu: currentMenu,
                 currentSubMenu: currentSubMenu,
                 selectedIndex: selectedIndex,
-                selectedAction: action,
                 isSubmenuActive: isSubmenuActive
             }, '*');
         }
+    }
+
+    // Function to update UI to match Lua state
+    function updateUIFromLuaState() {
+        const menuItemsContainer = document.getElementById('menuItems');
+        const selector = document.getElementById('selector');
+        const mainMenuTab = document.getElementById('mainMenuTab');
+        const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
+        
+        // Update menu bar
+        if (currentMenu === 'main') {
+            mainMenuTab.classList.add('main-active');
+            mainMenuTab.style.display = 'flex'; 
+            subTabs.forEach(tab => tab.style.display = 'none');
+            menuItemsContainer.classList.remove('submenu-active');
+        } else if (isSubmenuActive) {
+            mainMenuTab.classList.remove('main-active');
+            mainMenuTab.style.display = 'none'; 
+            subTabs.forEach(tab => {
+                tab.style.display = 'flex'; 
+                tab.classList.remove('active');
+            });
+            
+            // Find the correct sub-tab index
+            const subMenus = ['player', 'appearance'];
+            const subTabIndex = subMenus.indexOf(currentSubMenu);
+            if (subTabIndex >= 0 && subTabs[subTabIndex]) {
+                subTabs[subTabIndex].classList.add('active');
+            }
+            
+            menuItemsContainer.classList.add('submenu-active');
+        }
+        
+        // Update submenu content
+        document.querySelectorAll('.sub-tab-content').forEach(content => {
+            content.classList.remove('active-tab');
+        });
+        
+        if (isSubmenuActive && currentSubMenu) {
+            const activeSubmenu = document.getElementById(`${currentSubMenu}Submenu`);
+            if (activeSubmenu) {
+                activeSubmenu.classList.add('active-tab');
+            }
+        }
+        
+        // Update selection
+        updateSelectionFromLua();
+    }
+
+    // Function to update selection based on Lua state
+    function updateSelectionFromLua() {
+        const menuItemsContainer = document.getElementById('menuItems');
+        const selector = document.getElementById('selector');
+        
+        // Remove all selected classes
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Get current items based on menu state
+        let currentItems = [];
+        if (currentMenu === 'main') {
+            currentItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
+        } else if (isSubmenuActive) {
+            const activeSubmenu = document.getElementById(`${currentSubMenu}Submenu`);
+            if (activeSubmenu) {
+                currentItems = Array.from(activeSubmenu.querySelectorAll('.menu-item'));
+            }
+        }
+        
+        // Set selected item
+        if (currentItems.length > 0 && selectedIndex >= 0 && selectedIndex < currentItems.length) {
+            currentItems[selectedIndex].classList.add('selected');
+            
+            // Update selector position
+            const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
+            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
+            
+            // Update footer counter
+            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${currentItems.length}`;
+            
+            // Scroll into view if needed
+            currentItems[selectedIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
+        
+        updateScrollIndicator();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -858,7 +950,6 @@
                 document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
                 selector.style.transform = `translateY(-${itemHeight}px)`;
                 updateScrollIndicator();
-                sendStateToLua(); // Send state update
                 return;
             }
             
@@ -878,7 +969,6 @@
             }
 
             updateScrollIndicator();
-            sendStateToLua(); // Send state update
         }
 
         function moveSelection(direction) {
@@ -900,7 +990,6 @@
             // Update global state
             selectedIndex = index;
             updateScrollIndicator();
-            sendStateToLua(); // Send state update
         }
 
         function setActiveSubTab(tabKey) {
@@ -981,20 +1070,6 @@
                 checkbox.classList.toggle('on');
                 const state = checkbox.classList.contains('on') ? 'Enabled' : 'Disabled';
                 showNotification(item.dataset.action, state);
-            }
-        }
-
-        function executeAction(action) {
-            // Send action to Lua with current state
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage({
-                    type: 'menuAction',
-                    action: action,
-                    currentMenu: currentMenu,
-                    currentSubMenu: currentSubMenu,
-                    selectedIndex: selectedIndex,
-                    isSubmenuActive: isSubmenuActive
-                }, '*');
             }
         }
 
