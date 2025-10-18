@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -759,6 +759,16 @@
             window.postMessage(message, '*');
         }
 
+        // NEW: Function to send selection updates to Lua
+        function sendSelectionToLua(index, menu) {
+            const message = {
+                type: 'selection',
+                index: index,
+                menu: menu
+            };
+            window.postMessage(message, '*');
+        }
+
         function updateMenuBar() {
             if (currentMenu === 'main') {
                 mainMenuTab.classList.add('main-active');
@@ -882,6 +892,9 @@
             items[index].scrollIntoView({ behavior: 'auto', block: 'center' });
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
             updateScrollIndicator();
+            
+            // Send selection update to Lua
+            sendSelectionToLua(index, currentMenu);
         }
 
         function setActiveSubTab(tabKey) {
@@ -907,6 +920,9 @@
             
             updateMenuBar();
             updateSelection();
+            
+            // Send menu change to Lua
+            sendSelectionToLua(0, currentMenu);
         }
 
         function switchToSubmenu() {
@@ -937,6 +953,9 @@
             
             updateMenuBar();
             updateSelection();
+            
+            // Send menu change to Lua
+            sendSelectionToLua(0, currentMenu);
         }
 
         function switchSubTab(direction) {
@@ -1023,6 +1042,9 @@
         // Initialize
         updateMenuBar();
         updateSelection();
+        
+        // Send initial selection to Lua
+        sendSelectionToLua(0, currentMenu);
     });
 </script>
 
