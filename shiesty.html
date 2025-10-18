@@ -528,7 +528,7 @@
                 // auto-repeat while key is held
                 holdInterval = setInterval(() => {
                     moveSelection(direction);
-                }, 120);
+                }, 200); // Changed from 120 to 200 for slower scrolling
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (e.repeat) return;
