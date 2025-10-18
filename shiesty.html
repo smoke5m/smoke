@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -749,20 +749,14 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // NEW: Function to send current selection back to Lua
-        function sendSelectionToLua() {
-            const selectedItem = document.querySelector('.menu-item.selected');
-            if (selectedItem) {
-                const index = Array.from(currentItems).indexOf(selectedItem);
-                const message = {
-                    type: 'selection_update',
-                    menu: currentMenu,
-                    index: index,
-                    action: selectedItem.dataset.action,
-                    itemText: selectedItem.querySelector('span').textContent
-                };
-                console.log('LUA_UPDATE:' + JSON.stringify(message));
-            }
+        // Function to send action to Lua via window.postMessage
+        function sendActionToLua(action, menu) {
+            const message = {
+                type: 'action',
+                action: action,
+                menu: menu
+            };
+            window.postMessage(message, '*');
         }
 
         function updateMenuBar() {
@@ -819,7 +813,7 @@
             let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ').replace(/_/g, ' ');
             const htmlContent = `
                 <div class="content">
-                                        <div class="icon-group">
+                    <div class="icon-group">
                         <i class="fa-solid fa-check-circle"></i> 
                     </div>
                     <div class="text-group">
@@ -872,7 +866,6 @@
             updateScrollIndicator();
         }
 
-        // UPDATED: Now sends selection to Lua after every move
         function moveSelection(direction) {
             const items = currentItems;
             const current = document.querySelector('.menu-item.selected');
@@ -885,21 +878,10 @@
             if (index >= items.length) index = 0;
         
             items[index].classList.add('selected');
-        
-            // 🔹 Immediate visual update
             selector.style.transform = `translateY(${index * itemHeight}px)`;
-
-            // 🔹 Use 'auto' to prevent smooth scroll lag
             items[index].scrollIntoView({ behavior: 'auto', block: 'center' });
-        
-            // 🔹 Update footer count
             document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
-        
-            // 🔹 Update scrollbar
             updateScrollIndicator();
-        
-            // 🔹 Send Lua the exact current selection every move
-            sendSelectionToLua();
         }
 
         function setActiveSubTab(tabKey) {
@@ -925,9 +907,6 @@
             
             updateMenuBar();
             updateSelection();
-            
-            // NEW: Send updated selection to Lua
-            sendSelectionToLua();
         }
 
         function switchToSubmenu() {
@@ -958,9 +937,6 @@
             
             updateMenuBar();
             updateSelection();
-            
-            // NEW: Send updated selection to Lua
-            sendSelectionToLua();
         }
 
         function switchSubTab(direction) {
@@ -1010,13 +986,8 @@
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
 
-                // NEW: Send action to Lua instead of processing locally
-                console.log('LUA_ACTION:' + JSON.stringify({
-                    type: 'action',
-                    menu: currentMenu,
-                    action: action,
-                    itemText: selectedItem.querySelector('span').textContent
-                }));
+                // Send action to Lua
+                sendActionToLua(action, currentMenu);
 
                 // Keep local UI updates for checkboxes and submenu navigation
                 if (currentMenu === 'main') {
@@ -1049,10 +1020,9 @@
             }
         });
 
-        // Initialize and send initial state to Lua
+        // Initialize
         updateMenuBar();
         updateSelection();
-        sendSelectionToLua(); // Send initial selection
     });
 </script>
 
