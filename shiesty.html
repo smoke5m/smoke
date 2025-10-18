@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -551,7 +551,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
             
             <div class="menu-bar" id="menuBar">
@@ -749,24 +749,18 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // Function to send action to Lua via window.postMessage
+        // Function to send action to Lua via console.log (for debugging)
         function sendActionToLua(action, menu) {
-            const message = {
-                type: 'action',
-                action: action,
-                menu: menu
-            };
-            window.postMessage(message, '*');
+            console.log('ACTION_TRIGGERED:', action, menu);
+            // Also try to call a global function if it exists
+            if (typeof window.handleAction === 'function') {
+                window.handleAction(action, menu);
+            }
         }
 
-        // NEW: Function to send selection updates to Lua
+        // Function to send selection updates to Lua
         function sendSelectionToLua(index, menu) {
-            const message = {
-                type: 'selection',
-                index: index,
-                menu: menu
-            };
-            window.postMessage(message, '*');
+            console.log('SELECTION_CHANGED:', index, menu);
         }
 
         function updateMenuBar() {
