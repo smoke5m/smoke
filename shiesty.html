@@ -211,7 +211,7 @@
                         <div class="menu-item" data-action="armor"><span>Armor</span><span></span></div>
                         <div class="menu-item" data-action="godmode"><span>Godmode</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="noclip"><span>Noclip</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="invisible"><span>invisible</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="invisible"><span>Invisible</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="no_ragdoll"><span>No Ragdoll</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="infinite_stamina"><span>Infinite Stamina</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="super_jump"><span>Super Jump</span><span class="checkbox"></span></div>
@@ -286,9 +286,10 @@
         let numItems = currentItems.length;
 
         function sendToLua(message) {
-            if (window.parent && window.parent.postMessage) {
-                // send as an object (the runtime will deliver to Lua)
-                window.parent.postMessage(message, '*');
+            if (window.TriggerLuaEvent) {
+                window.TriggerLuaEvent('menu:action', JSON.stringify(message));
+            } else {
+                console.log('TriggerLuaEvent not available');
             }
             console.log('LUA_MESSAGE:' + JSON.stringify(message));
         }
