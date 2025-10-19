@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SHIESTYnigga Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -168,7 +168,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">SHIESTYnigga</div>
+                <div class="menu-header">smoke</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -287,53 +287,19 @@
 
         // Robust sendToLua: tries several common bridges (TriggerLuaEvent, fetch, postMessage, CustomEvent)
         function sendToLua(message) {
-            // keep a console copy for debugging
             console.log('LUA_MESSAGE_OUT:', message);
-
-            // 1) Old-school exposed function some DUI wrappers provide
             try {
-                if (typeof window.TriggerLuaEvent === 'function') {
-                    try {
-                        window.TriggerLuaEvent('menu:action', JSON.stringify(message));
-                        console.log('sent via window.TriggerLuaEvent');
-                        return;
-                    } catch (e) {
-                        console.warn('window.TriggerLuaEvent failed', e);
-                    }
-                }
-            } catch (e) { console.warn('TriggerLuaEvent check failed', e); }
-
-            // 2) Try the FiveM NUI fetch pattern (generic attempt).
-            try {
-                fetch(`https://menuAction/menuAction`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-                    body: JSON.stringify(message)
-                }).then(() => {
-                    console.log('sent via generic fetch (may work if runtime maps path)');
-                }).catch((err) => {
-                    console.warn('fetch to https://menuAction failed (expected on non-resource contexts)', err);
-                });
-            } catch (e) { console.warn('fetch attempt error', e); }
-
-            // 3) Try posting a message to parent — some DUI wrappers forward postMessage to the host.
-            try {
-                if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: 'menu:action', payload: message }, '*');
-                    console.log('posted to window.parent via postMessage');
-                }
-            } catch (e) { console.warn('postMessage failed', e); }
-
-            // 4) Fire a custom DOM event — some wrappers listen on window or document for custom events.
-            try {
-                const ev = new CustomEvent('menu:action', { detail: message });
-                window.dispatchEvent(ev);
-                document.dispatchEvent(ev);
-                console.log('dispatched CustomEvent menu:action');
-            } catch (e) { console.warn('CustomEvent dispatch failed', e); }
-
-            // 5) Last-resort: leave a console log the Lua side can grep for
-            console.warn('sendToLua: no known delivery confirmed — check runtime docs for how DUI->Lua messages are delivered.');
+                // Use SendNUIMessage for RedEngine/FiveM compatibility
+                window.postMessage({
+                    type: 'menuAction',
+                    payload: message
+                }, '*');
+                console.log('Sent via window.postMessage');
+            } catch (e) {
+                console.warn('postMessage failed', e);
+                // Fallback: Log for debugging
+                console.warn('sendToLua: Failed to send message to Lua. Check RedEngine NUI bridge.');
+            }
         }
 
         function sendSelectionToLua() {
