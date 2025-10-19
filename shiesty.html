@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SHIESTY Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -173,7 +173,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">SHIESTY</div>
+                <div class="menu-header">smoke</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -294,6 +294,7 @@
         let currentMenu = 'main';
         let holdInterval = null;
         let isHolding = false;
+        let lastScrollTime = 0; // For debouncing scroll events
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height')) || 8;
@@ -309,7 +310,7 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // Robust sendToLua: tries several common bridges (fetch to NUI endpoint, postMessage, parent.postMessage, CustomEvent)
+        // Robust sendToLua: tries several common bridges
         function sendToLua(message) {
             const payload = (typeof message === 'string') ? message : JSON.stringify(message);
             console.log('LUA_MESSAGE_OUT:', payload);
@@ -480,7 +481,6 @@
             updateScrollIndicator();
         }
 
-        // moveSelection uses isHolding to decide instant vs smooth scroll and to temporarily disable selector transitions
         function moveSelection(direction) {
             const items = currentItems;
             const current = document.querySelector('.menu-item.selected');
@@ -493,17 +493,10 @@
 
             items[index].classList.add('selected');
 
-            if (isHolding) {
-                selector.style.transition = 'none';
-            } else {
-                selector.style.transition = 'transform .25s ease';
-            }
-
             selector.style.transform = `translateY(${index * itemHeight}px)`;
 
-            const scrollBehavior = isHolding ? 'auto' : 'smooth';
             try {
-                items[index].scrollIntoView({ behavior: scrollBehavior, block: 'center' });
+                items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
             } catch (err) {
                 const desiredTop = index * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
                 menuItemsContainer.scrollTop = Math.max(0, desiredTop);
@@ -594,7 +587,7 @@
             showNotification(action);
         }
 
-        // KEY HANDLERS: now handle hold-behavior with isHolding and clear/restore selector transition on keyup
+        // KEY HANDLERS
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -607,7 +600,7 @@
                 // auto-repeat while key is held
                 holdInterval = setInterval(() => {
                     moveSelection(direction);
-                }, 200); // Changed from 120 to 200 for slower scrolling
+                }, 200);
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (e.repeat) return;
@@ -617,7 +610,7 @@
 
                 // For main menu player entry, open submenu locally
                 if (currentMenu === 'main') {
-                    // send action to Lua too (so Lua can log or react if needed)
+                    // send action to Lua too
                     sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
                     if (action === 'player') {
                         switchToSubmenu();
@@ -627,14 +620,11 @@
 
                 if (isSubmenuActive) {
                     if (selectedItem.querySelector('.checkbox')) {
-                        // toggle visually first, then send state to Lua (toggleCheckbox does both)
                         toggleCheckbox(selectedItem);
                     } else {
-                        // non-checkbox action
                         executeAction(action);
                     }
                 } else {
-                    // main menu action that isn't submenu (send)
                     executeAction(action);
                 }
             } else if (e.key === 'Backspace' && isSubmenuActive) {
@@ -652,33 +642,29 @@
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 clearInterval(holdInterval);
                 holdInterval = null;
-
                 isHolding = false;
-                requestAnimationFrame(() => {
-                    selector.style.transition = 'transform .25s ease';
-                    updateSelection();
-                    updateScrollIndicator();
-                });
+                updateSelection();
+                updateScrollIndicator();
             }
         });
 
-        // Wheel scrolling support for mouse
+        // Wheel scrolling support with debounce
+        let scrollTimeout = null;
         menuItemsContainer.addEventListener('wheel', (ev) => {
             ev.preventDefault();
             menuItemsContainer.scrollTop += ev.deltaY;
-            updateScrollIndicator();
-
-            // keep selector aligned with selected item
-            const selectedItem = document.querySelector('.menu-item.selected');
-            if (selectedItem) {
-                const idx = Array.from(currentItems).indexOf(selectedItem);
-                selector.style.transition = 'none';
-                selector.style.transform = `translateY(${idx * itemHeight}px)`;
-                requestAnimationFrame(() => selector.style.transition = 'transform .25s ease');
-            }
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                updateScrollIndicator();
+                const selectedItem = document.querySelector('.menu-item.selected');
+                if (selectedItem) {
+                    const idx = Array.from(currentItems).indexOf(selectedItem);
+                    selector.style.transform = `translateY(${idx * itemHeight}px)`;
+                }
+            }, 100);
         }, { passive: false });
 
-        // Handle incoming custom menu messages re-dispatched earlier
+        // Handle incoming custom menu messages
         window.addEventListener('menu:message', (ev) => {
             const payload = ev.detail;
             if (!payload || !payload.type) return;
@@ -690,7 +676,7 @@
                 const items = Array.isArray(payload.items) ? payload.items : [];
                 const footer = payload.footer || {};
 
-                // --- TAB VISUAL FIX: set active classes for subTabs & main tab
+                // Update tab visuals
                 if (isSub) {
                     isSubmenuActive = true;
                     menuItemsContainer.classList.add('submenu-active');
@@ -698,7 +684,6 @@
                     const submenuEl = document.getElementById(menuName + 'Submenu');
                     if (submenuEl) submenuEl.classList.add('active-tab');
 
-                    // sub-tab visuals
                     subTabs.forEach(tab => {
                         const isActive = (tab.dataset.tabKey === menuName);
                         tab.style.display = 'flex';
@@ -713,7 +698,6 @@
                     mainMenuTab.style.display = 'flex';
                     mainMenuTab.classList.add('main-active');
 
-                    // hide sub-tabs visually
                     subTabs.forEach(tab => {
                         tab.classList.remove('active');
                         tab.style.display = 'none';
@@ -725,7 +709,7 @@
                 if (!containerEl) containerEl = document.querySelector('.main-menu');
                 const domItems = Array.from(containerEl.querySelectorAll('.menu-item'));
 
-                // Update each dom item from payload items (text + checkbox state)
+                // Update DOM items from payload
                 domItems.forEach((dom, i) => {
                     dom.classList.remove('selected');
                     const src = items[i];
@@ -739,52 +723,40 @@
                     }
                 });
 
-                // Clamp index to the dom items length
+                // Update selection and scroll
                 const selIndex = Math.max(0, Math.min(domItems.length - 1, index));
                 if (domItems[selIndex]) {
                     domItems[selIndex].classList.add('selected');
-
-                    // Move selector visually
-                    selector.style.transition = 'transform .25s ease';
                     selector.style.transform = `translateY(${selIndex * itemHeight}px)`;
 
-                    // Ensure the selected item is visible and centered
-                    // Use a tiny timeout so the browser has applied DOM changes before scrolling
-                    setTimeout(() => {
-                        try {
-                            domItems[selIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
-                        } catch (err) {
-                            const desiredTop = selIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
-                            menuItemsContainer.scrollTop = Math.max(0, desiredTop);
-                        }
-                        // update currentItems/numItems after scroll
-                        currentItems = domItems;
-                        numItems = currentItems.length;
-                        updateScrollIndicator();
+                    try {
+                        domItems[selIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } catch (err) {
+                        const desiredTop = selIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
+                        menuItemsContainer.scrollTop = Math.max(0, desiredTop);
+                    }
 
-                        // ensure sub tab visuals reflect active tab
-                        // (already handled above, but keep consistent)
-                        if (isSub) {
-                            subTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tabKey === menuName));
-                            mainMenuTab.classList.remove('main-active');
-                        } else {
-                            mainMenuTab.classList.add('main-active');
-                        }
+                    currentItems = domItems;
+                    numItems = currentItems.length;
+                    updateScrollIndicator();
 
-                    }, 20);
+                    if (isSub) {
+                        subTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tabKey === menuName));
+                        mainMenuTab.classList.remove('main-active');
+                    } else {
+                        mainMenuTab.classList.add('main-active');
+                    }
                 } else {
-                    // update references even if selected not present
                     currentItems = domItems;
                     numItems = currentItems.length;
                     updateScrollIndicator();
                 }
 
-                // Update footer (safe)
+                // Update footer
                 try {
                     const footerRight = document.querySelector('.menu-footer .right');
                     if (footerRight) footerRight.textContent = (footer.current || (selIndex + 1)) + '/' + (footer.total || numItems);
                 } catch (e) {}
-
             } else if (payload.type === 'menu_notify') {
                 const title = payload.title || 'Action Confirmed';
                 const message = payload.message || '';
@@ -812,22 +784,23 @@
             }
         });
 
-        // initialize
+        // Initialize
         updateMenuBar();
         updateSelection();
         sendSelectionToLua();
         updateScrollIndicator();
 
-        // Keep scroll indicator in sync if user scrolls with mouse/wheel
+        // Keep scroll indicator in sync with debounce
         menuItemsContainer.addEventListener('scroll', () => {
-            updateScrollIndicator();
-            const selectedItem = document.querySelector('.menu-item.selected');
-            if (selectedItem) {
-                const idx = Array.from(currentItems).indexOf(selectedItem);
-                selector.style.transition = 'none';
-                selector.style.transform = `translateY(${idx * itemHeight}px)`;
-                requestAnimationFrame(() => selector.style.transition = 'transform .25s ease');
-            }
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                updateScrollIndicator();
+                const selectedItem = document.querySelector('.menu-item.selected');
+                if (selectedItem) {
+                    const idx = Array.from(currentItems).indexOf(selectedItem);
+                    selector.style.transform = `translateY(${idx * itemHeight}px)`;
+                }
+            }, 100);
         });
     });
 </script>
