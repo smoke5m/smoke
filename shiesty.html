@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <title>SHIESTY Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -39,9 +39,9 @@
             margin: 0;
             height: 100vh;
             display: flex;
-            justify-content: flex-start; 
-            align-items: center;          
-            background: transparent; 
+            justify-content: flex-start;
+            align-items: center;
+            background: transparent;
             font-family: 'Roboto', sans-serif;
             flex-direction: column;
             padding-left: 20px;
@@ -50,7 +50,7 @@
         .menu-container {
             position: fixed;
             top: 50%;
-            left: 100px; 
+            left: 100px;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
@@ -99,10 +99,11 @@
             cursor: default;
             position:relative;
             color: var(--color-text-bright);
-            transition: box-shadow .1s ease;
+            transition: box-shadow .1s ease, background .08s ease;
         }
         .menu-item i { font-size:0.7em; }
 
+        /* selector shouldn't steal pointer events */
         .selector {
             position:absolute;
             left:0;
@@ -113,9 +114,13 @@
             border-radius:4px;
             z-index: 1;
             box-shadow: 0 0 4px 2px rgba(255,0,234,0.82);
+            pointer-events: none;
         }
 
-        .menu-item span, .menu-item i { position: relative; z-index: 2; }
+        .menu-item span, .menu-item i { position: relative; z-index: 2; pointer-events: auto; }
+
+        /* subtle hover so it feels responsive */
+        .menu-item:hover { background: rgba(255,255,255,0.02); }
 
         .scroll-indicator-wrapper { position:absolute; top:130px; left: calc(-55% + (var(--menu-width)/2) + var(--scrollbar-margin) - 5px); width:var(--scrollbar-width); z-index:3; background:#000000; border-radius:3px; padding-top:var(--arrow-height); padding-bottom:var(--arrow-height); display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
         .scroll-indicator-arrow { position:absolute; width:110%; height:var(--arrow-height); background:#000000; display:flex; justify-content:center; align-items:center; color:white; font-size:8px; }
@@ -168,7 +173,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">SHIESTY</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -215,14 +220,14 @@
                         <div class="menu-item" data-action="no_ragdoll"><span>No Ragdoll</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="infinite_stamina"><span>Infinite Stamina</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="super_jump"><span>Super Jump</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="super_punch"><span>Super Punch</span><span class="checkbox"></span></div> 
+                        <div class="menu-item" data-action="super_punch"><span>Super Punch</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="throw_from_vehicle"><span>Throw From Vehicle</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="name_tags"><span>Name Tags</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="crosshair"><span>Crosshair</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="fast_run"><span>Fast Run</span><span class="checkbox"></span></div>
                     </div>
 
-                        <div id="appearanceSubmenu" class="sub-tab-content">
+                    <div id="appearanceSubmenu" class="sub-tab-content">
                         <div class="menu-item" data-action="randomize-outfit"><span>Randomize Outfit</span><span></span></div>
                         <div class="menu-item" data-action="appearance-hat"><span>Toggle Hat</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="appearance-accessories"><span>Random Accessories</span></div>
@@ -259,13 +264,11 @@
             return;
         }
 
-        // If it's a menu_update from Lua (MachoSendDuiMessage), dispatch a custom message to be handled in DOMContentLoaded
+        // If it's a menu_update or menu_notify from Lua (MachoSendDuiMessage), normalize and re-dispatch
         if (data.type === 'menu_update' || data.type === 'menu_notify') {
-            // Normalize: some runtimes pass data as string
             let payload = data;
             try {
                 if (typeof data === 'string') payload = JSON.parse(data);
-                // If it's wrapped like { data: "..." } try to unwrap
                 if (payload && payload.data && typeof payload.data === 'string') {
                     const inner = JSON.parse(payload.data);
                     if (inner) payload = inner;
@@ -273,7 +276,6 @@
             } catch (e) {
                 // ignore parse errors and use original
             }
-            // Re-dispatch for the rest of the code (so the DOMContentLoaded handler can pick it up)
             window.dispatchEvent(new CustomEvent('menu:message', { detail: payload }));
             return;
         }
@@ -283,15 +285,15 @@
         const menuItemsContainer = document.getElementById('menuItems');
         const selector = document.getElementById('selector');
         const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
-        const scrollThumb = document.getElementById('scrollThumb'); 
+        const scrollThumb = document.getElementById('scrollThumb');
         const mainMenuTab = document.getElementById('mainMenuTab');
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
-        let subTabIndex = 0; 
+        let subTabIndex = 0;
 
         let isSubmenuActive = false;
-        let currentMenu = 'main'; 
+        let currentMenu = 'main';
         let holdInterval = null;
-        let isHolding = false; // tracks if arrow key is held for auto-repeat
+        let isHolding = false;
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height')) || 8;
@@ -312,7 +314,6 @@
             const payload = (typeof message === 'string') ? message : JSON.stringify(message);
             console.log('LUA_MESSAGE_OUT:', payload);
 
-            // 1) Preferred for FiveM NUI: POST to https://<resource>/<callbackName>
             try {
                 fetch('https://menu:action', {
                     method: 'POST',
@@ -327,7 +328,6 @@
                 console.warn('fetch to https://menu:action threw:', err);
             }
 
-            // 2) Additional fetch fallback
             try {
                 fetch('https://menuAction', {
                     method: 'POST',
@@ -338,7 +338,6 @@
                 }).catch(() => {});
             } catch (err) {}
 
-            // 3) Try window.postMessage
             try {
                 window.postMessage({ type: 'menu:action', data: payload }, '*');
                 console.log('Sent via window.postMessage');
@@ -346,7 +345,6 @@
                 console.warn('window.postMessage failed', err);
             }
 
-            // 4) Try parent.postMessage
             try {
                 if (window.parent) {
                     window.parent.postMessage({ type: 'menu:action', data: payload }, '*');
@@ -356,7 +354,6 @@
                 console.warn('parent.postMessage failed', err);
             }
 
-            // 5) CustomEvent
             try {
                 window.dispatchEvent(new CustomEvent('menu:action', { detail: payload }));
                 console.log('Dispatched CustomEvent menu:action');
@@ -364,7 +361,6 @@
                 console.warn('CustomEvent dispatch failed', err);
             }
 
-            // 6) Try direct functions
             try {
                 if (typeof window.TriggerLuaEvent === 'function') {
                     try { window.TriggerLuaEvent('menu:action', payload); console.log('Called TriggerLuaEvent'); } catch(e){/*ignore*/ }
@@ -395,14 +391,14 @@
         function updateMenuBar() {
             if (currentMenu === 'main') {
                 mainMenuTab.classList.add('main-active');
-                mainMenuTab.style.display = 'flex'; 
+                mainMenuTab.style.display = 'flex';
                 subTabs.forEach(tab => tab.style.display = 'none');
                 menuItemsContainer.classList.remove('submenu-active');
             } else if (isSubmenuActive) {
                 mainMenuTab.classList.remove('main-active');
-                mainMenuTab.style.display = 'none'; 
+                mainMenuTab.style.display = 'none';
                 subTabs.forEach(tab => { tab.style.display = 'flex'; tab.classList.remove('active'); });
-                subTabs[subTabIndex].classList.add('active');
+                if (subTabs[subTabIndex]) subTabs[subTabIndex].classList.add('active');
                 menuItemsContainer.classList.add('submenu-active');
             }
         }
@@ -410,7 +406,7 @@
         function updateScrollIndicator() {
             const menuHeight = menuItemsContainer.clientHeight;
             scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
-            const thumbTrackHeight = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar').clientHeight; 
+            const thumbTrackHeight = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar').clientHeight;
             const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
             const totalContentHeight = numItems * itemHeight;
 
@@ -688,32 +684,43 @@
             if (!payload || !payload.type) return;
 
             if (payload.type === 'menu_update') {
-                // payload expected shape:
-                // { type: 'menu_update', menu: 'main'|'player'|..., isSubmenu: bool, index: zero_based_index, items: [{action,text,type,state}, ...], footer: {current,total} }
                 const menuName = payload.menu || 'main';
                 const isSub = !!payload.isSubmenu;
                 const index = (payload.index != null) ? Number(payload.index) : 0;
                 const items = Array.isArray(payload.items) ? payload.items : [];
                 const footer = payload.footer || {};
 
-                // switch visible menu
+                // --- TAB VISUAL FIX: set active classes for subTabs & main tab
                 if (isSub) {
+                    isSubmenuActive = true;
                     menuItemsContainer.classList.add('submenu-active');
                     document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active-tab'));
                     const submenuEl = document.getElementById(menuName + 'Submenu');
                     if (submenuEl) submenuEl.classList.add('active-tab');
-                    document.getElementById('mainMenuTab').style.display = 'none';
-                    document.querySelectorAll('.menu-bar-sub-tab').forEach(t => t.style.display = 'flex');
-                    // set currentItems reference
-                    currentItems = allSubmenuItems[menuName] || currentItems;
+
+                    // sub-tab visuals
+                    subTabs.forEach(tab => {
+                        const isActive = (tab.dataset.tabKey === menuName);
+                        tab.style.display = 'flex';
+                        tab.classList.toggle('active', isActive);
+                    });
+                    mainMenuTab.style.display = 'none';
+                    mainMenuTab.classList.remove('main-active');
                 } else {
+                    isSubmenuActive = false;
                     menuItemsContainer.classList.remove('submenu-active');
-                    document.getElementById('mainMenuTab').style.display = 'flex';
-                    document.querySelectorAll('.menu-bar-sub-tab').forEach(t => t.style.display = 'none');
-                    currentItems = mainMenuItems;
+                    document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active-tab'));
+                    mainMenuTab.style.display = 'flex';
+                    mainMenuTab.classList.add('main-active');
+
+                    // hide sub-tabs visually
+                    subTabs.forEach(tab => {
+                        tab.classList.remove('active');
+                        tab.style.display = 'none';
+                    });
                 }
 
-                // Update DOM items for the current container
+                // Determine container for DOM items
                 let containerEl = !isSub ? document.querySelector('.main-menu') : document.getElementById(menuName + 'Submenu');
                 if (!containerEl) containerEl = document.querySelector('.main-menu');
                 const domItems = Array.from(containerEl.querySelectorAll('.menu-item'));
@@ -742,28 +749,43 @@
                     selector.style.transform = `translateY(${selIndex * itemHeight}px)`;
 
                     // Ensure the selected item is visible and centered
-                    try {
-                        domItems[selIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
-                    } catch (err) {
-                        const desiredTop = selIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
-                        menuItemsContainer.scrollTop = Math.max(0, desiredTop);
-                    }
+                    // Use a tiny timeout so the browser has applied DOM changes before scrolling
+                    setTimeout(() => {
+                        try {
+                            domItems[selIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
+                        } catch (err) {
+                            const desiredTop = selIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
+                            menuItemsContainer.scrollTop = Math.max(0, desiredTop);
+                        }
+                        // update currentItems/numItems after scroll
+                        currentItems = domItems;
+                        numItems = currentItems.length;
+                        updateScrollIndicator();
+
+                        // ensure sub tab visuals reflect active tab
+                        // (already handled above, but keep consistent)
+                        if (isSub) {
+                            subTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tabKey === menuName));
+                            mainMenuTab.classList.remove('main-active');
+                        } else {
+                            mainMenuTab.classList.add('main-active');
+                        }
+
+                    }, 20);
+                } else {
+                    // update references even if selected not present
+                    currentItems = domItems;
+                    numItems = currentItems.length;
+                    updateScrollIndicator();
                 }
 
-                // Update currentItems and numItems references used by keyboard handlers
-                currentItems = domItems;
-                numItems = currentItems.length;
-
-                // Update footer
+                // Update footer (safe)
                 try {
                     const footerRight = document.querySelector('.menu-footer .right');
                     if (footerRight) footerRight.textContent = (footer.current || (selIndex + 1)) + '/' + (footer.total || numItems);
                 } catch (e) {}
 
-                updateScrollIndicator();
-            }
-
-            if (payload.type === 'menu_notify') {
+            } else if (payload.type === 'menu_notify') {
                 const title = payload.title || 'Action Confirmed';
                 const message = payload.message || '';
                 const existingNotification = document.querySelector('.notification-box');
