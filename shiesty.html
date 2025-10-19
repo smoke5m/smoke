@@ -5,7 +5,7 @@
     <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+
     <style>
         /* --- Root Variables --- */
         :root {
@@ -164,13 +164,13 @@
     </style>
 </head>
 <body>
-    
+
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
                 <div class="menu-header">smoke</div>
             </div>
-            
+
             <div class="menu-bar" id="menuBar">
                 <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
 
@@ -179,7 +179,7 @@
 
             </div>
         </div>
-        
+
         <div class="scroll-indicator-wrapper" id="scrollIndicatorWrapper">
             <div class="scroll-indicator-arrow top"><i class="fas fa-chevron-up"></i></div>
             <div class="scroll-indicator-bar">
@@ -187,11 +187,11 @@
             </div>
             <div class="scroll-indicator-arrow bottom"><i class="fas fa-chevron-down"></i></div>
         </div>
-        
+
         <div class="menu-items-wrapper">
             <div class="menu-items" id="menuItems">
                 <div class="selector" id="selector"></div>
-                
+
                 <div class="main-menu">
                     <div class="menu-item" data-action="player"><span>Player</span><i class="fas fa-chevron-right"></i></div>
                     <div class="menu-item" data-action="server"><span>Server</span><i class="fas fa-chevron-right"></i></div>
@@ -203,7 +203,7 @@
                     <div class="menu-item" data-action="settings"><span>Settings</span><i class="fas fa-chevron-right"></i></div>
                     <div class="menu-item" data-action="search"><span>Search</span><i class="fas fa-search"></i></div>
                 </div>
-                
+
                 <div class="submenu">
                     <div id="playerSubmenu" class="sub-tab-content">
                         <div class="menu-item" data-action="revive"><span>Revive</span><span></span></div>
@@ -222,7 +222,7 @@
                         <div class="menu-item" data-action="fast_run"><span>Fast Run</span><span class="checkbox"></span></div>
                     </div>
 
-                    <div id="appearanceSubmenu" class="sub-tab-content">
+                        <div id="appearanceSubmenu" class="sub-tab-content">
                         <div class="menu-item" data-action="randomize-outfit"><span>Randomize Outfit</span><span></span></div>
                         <div class="menu-item" data-action="appearance-hat"><span>Toggle Hat</span><span class="checkbox"></span></div>
                         <div class="menu-item" data-action="appearance-accessories"><span>Random Accessories</span></div>
@@ -285,13 +285,55 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
+        // Robust sendToLua: tries several common bridges (TriggerLuaEvent, fetch, postMessage, CustomEvent)
         function sendToLua(message) {
-            if (window.TriggerLuaEvent) {
-                window.TriggerLuaEvent('menu:action', JSON.stringify(message));
-            } else {
-                console.log('TriggerLuaEvent not available');
-            }
-            console.log('LUA_MESSAGE:' + JSON.stringify(message));
+            // keep a console copy for debugging
+            console.log('LUA_MESSAGE_OUT:', message);
+
+            // 1) Old-school exposed function some DUI wrappers provide
+            try {
+                if (typeof window.TriggerLuaEvent === 'function') {
+                    try {
+                        window.TriggerLuaEvent('menu:action', JSON.stringify(message));
+                        console.log('sent via window.TriggerLuaEvent');
+                        return;
+                    } catch (e) {
+                        console.warn('window.TriggerLuaEvent failed', e);
+                    }
+                }
+            } catch (e) { console.warn('TriggerLuaEvent check failed', e); }
+
+            // 2) Try the FiveM NUI fetch pattern (generic attempt).
+            try {
+                fetch(`https://menuAction/menuAction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                    body: JSON.stringify(message)
+                }).then(() => {
+                    console.log('sent via generic fetch (may work if runtime maps path)');
+                }).catch((err) => {
+                    console.warn('fetch to https://menuAction failed (expected on non-resource contexts)', err);
+                });
+            } catch (e) { console.warn('fetch attempt error', e); }
+
+            // 3) Try posting a message to parent — some DUI wrappers forward postMessage to the host.
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'menu:action', payload: message }, '*');
+                    console.log('posted to window.parent via postMessage');
+                }
+            } catch (e) { console.warn('postMessage failed', e); }
+
+            // 4) Fire a custom DOM event — some wrappers listen on window or document for custom events.
+            try {
+                const ev = new CustomEvent('menu:action', { detail: message });
+                window.dispatchEvent(ev);
+                document.dispatchEvent(ev);
+                console.log('dispatched CustomEvent menu:action');
+            } catch (e) { console.warn('CustomEvent dispatch failed', e); }
+
+            // 5) Last-resort: leave a console log the Lua side can grep for
+            console.warn('sendToLua: no known delivery confirmed — check runtime docs for how DUI->Lua messages are delivered.');
         }
 
         function sendSelectionToLua() {
@@ -330,7 +372,7 @@
             const thumbTrackHeight = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar').clientHeight; 
             const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
             const totalContentHeight = numItems * itemHeight;
-            
+
             let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
                 ? thumbTrackHeight
                 : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight);
@@ -344,7 +386,7 @@
                     scrollPercentage = menuItemsContainer.scrollTop / maxScrollTop;
                 }
             }
-            
+
             const thumbPosition = scrollPercentage * maxThumbTravel;
             scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
         }
@@ -367,7 +409,7 @@
             `;
             notification.innerHTML = htmlContent;
             document.body.appendChild(notification);
-            
+
             setTimeout(() => notification.classList.add('show'), 10);
             setTimeout(() => {
                 notification.classList.remove('show');
@@ -384,11 +426,11 @@
                 updateScrollIndicator();
                 return;
             }
-            
+
             const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
             selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
             document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
-            
+
             if (numItems > MAX_VISIBLE_ITEMS) {
                 const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
                 const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
@@ -407,11 +449,11 @@
             const current = document.querySelector('.menu-item.selected');
             let index = Array.from(items).indexOf(current);
             if (current) current.classList.remove('selected');
-            
+
             index += direction;
             if (index < 0) index = items.length - 1;
             if (index >= items.length) index = 0;
-            
+
             items[index].classList.add('selected');
 
             if (isHolding) {
@@ -440,7 +482,7 @@
             subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
             const currentlySelected = document.querySelector('.menu-item.selected');
             if (currentlySelected) currentlySelected.classList.remove('selected');
-            
+
             currentItems = allSubmenuItems[tabKey];
             numItems = currentItems.length;
             if (currentItems.length > 0) currentItems[0].classList.add('selected');
