@@ -285,20 +285,74 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // Robust sendToLua: tries several common bridges (TriggerLuaEvent, fetch, postMessage, CustomEvent)
+        // Robust sendToLua: tries several common bridges (fetch to NUI endpoint, postMessage, parent.postMessage, CustomEvent)
         function sendToLua(message) {
-            console.log('LUA_MESSAGE_OUT:', message);
+            const payload = (typeof message === 'string') ? message : JSON.stringify(message);
+            console.log('LUA_MESSAGE_OUT:', payload);
+
+            // 1) Preferred for FiveM NUI: POST to https://<resource>/<callbackName>
+            // Many scripts use: RegisterNUICallback('menuAction', ...) or similar on the Lua side.
             try {
-                // Use SendNUIMessage for RedEngine/FiveM compatibility
-                window.postMessage({
-                    type: 'menuAction',
-                    payload: message
-                }, '*');
+                fetch('https://menu:action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload
+                }).then(() => {
+                    console.log('Sent via fetch to https://menu:action');
+                }).catch((err) => {
+                    console.warn('fetch https://menu:action failed:', err);
+                });
+            } catch (err) {
+                console.warn('fetch to https://menu:action threw:', err);
+            }
+
+            // 2) Additional fetch fallback (some servers register different paths)
+            try {
+                fetch('https://menuAction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload
+                }).then(() => {
+                    console.log('Sent via fetch to https://menuAction');
+                }).catch(() => {});
+            } catch (err) {}
+
+            // 3) Try window.postMessage (some custom DUI bridges pick this up)
+            try {
+                window.postMessage({ type: 'menu:action', data: payload }, '*');
                 console.log('Sent via window.postMessage');
-            } catch (e) {
-                console.warn('postMessage failed', e);
-                // Fallback: Log for debugging
-                console.warn('sendToLua: Failed to send message to Lua. Check RedEngine NUI bridge.');
+            } catch (err) {
+                console.warn('window.postMessage failed', err);
+            }
+
+            // 4) Try parent.postMessage (some embed/iframe setups)
+            try {
+                if (window.parent) {
+                    window.parent.postMessage({ type: 'menu:action', data: payload }, '*');
+                    console.log('Sent via parent.postMessage');
+                }
+            } catch (err) {
+                console.warn('parent.postMessage failed', err);
+            }
+
+            // 5) CustomEvent for any listener in the page
+            try {
+                window.dispatchEvent(new CustomEvent('menu:action', { detail: payload }));
+                console.log('Dispatched CustomEvent menu:action');
+            } catch (err) {
+                console.warn('CustomEvent dispatch failed', err);
+            }
+
+            // 6) If the runtime exposes a direct function, try invoking it safely
+            try {
+                if (typeof window.TriggerLuaEvent === 'function') {
+                    try { window.TriggerLuaEvent('menu:action', payload); console.log('Called TriggerLuaEvent'); } catch(e){/*ignore*/ }
+                }
+                if (typeof window.TriggerEvent === 'function') {
+                    try { window.TriggerEvent('menu:action', payload); console.log('Called TriggerEvent'); } catch(e){/*ignore*/ }
+                }
+            } catch (err) {
+                console.warn('Direct function invocation failed', err);
             }
         }
 
