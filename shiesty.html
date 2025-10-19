@@ -243,17 +243,39 @@
     </div>
 
 <script>
-    // Listen for messages from Lua (if needed)
+    // Global message handler (handles both key events from Lua and 'menu_update'/'menu_notify' from Lua)
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || !data.type) return;
+
+        // If it's a key event proxy from Lua (keydown/keyup), create and dispatch keyboard event
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
-                keyCode: data.keyCode,
+                keyCode: data.keyCode || 0,
                 bubbles: true
             });
             document.dispatchEvent(e);
+            return;
+        }
+
+        // If it's a menu_update from Lua (MachoSendDuiMessage), dispatch a custom message to be handled in DOMContentLoaded
+        if (data.type === 'menu_update' || data.type === 'menu_notify') {
+            // Normalize: some runtimes pass data as string
+            let payload = data;
+            try {
+                if (typeof data === 'string') payload = JSON.parse(data);
+                // If it's wrapped like { data: "..." } try to unwrap
+                if (payload && payload.data && typeof payload.data === 'string') {
+                    const inner = JSON.parse(payload.data);
+                    if (inner) payload = inner;
+                }
+            } catch (e) {
+                // ignore parse errors and use original
+            }
+            // Re-dispatch for the rest of the code (so the DOMContentLoaded handler can pick it up)
+            window.dispatchEvent(new CustomEvent('menu:message', { detail: payload }));
+            return;
         }
     });
 
@@ -271,8 +293,8 @@
         let holdInterval = null;
         let isHolding = false; // tracks if arrow key is held for auto-repeat
 
-        const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height'));
-        const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height'));
+        const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
+        const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height')) || 8;
         const MAX_VISIBLE_ITEMS = 10;
         const NOTI_DURATION = 2000;
         const NOTI_TRANSITION = 300;
@@ -291,7 +313,6 @@
             console.log('LUA_MESSAGE_OUT:', payload);
 
             // 1) Preferred for FiveM NUI: POST to https://<resource>/<callbackName>
-            // Many scripts use: RegisterNUICallback('menuAction', ...) or similar on the Lua side.
             try {
                 fetch('https://menu:action', {
                     method: 'POST',
@@ -306,7 +327,7 @@
                 console.warn('fetch to https://menu:action threw:', err);
             }
 
-            // 2) Additional fetch fallback (some servers register different paths)
+            // 2) Additional fetch fallback
             try {
                 fetch('https://menuAction', {
                     method: 'POST',
@@ -317,7 +338,7 @@
                 }).catch(() => {});
             } catch (err) {}
 
-            // 3) Try window.postMessage (some custom DUI bridges pick this up)
+            // 3) Try window.postMessage
             try {
                 window.postMessage({ type: 'menu:action', data: payload }, '*');
                 console.log('Sent via window.postMessage');
@@ -325,7 +346,7 @@
                 console.warn('window.postMessage failed', err);
             }
 
-            // 4) Try parent.postMessage (some embed/iframe setups)
+            // 4) Try parent.postMessage
             try {
                 if (window.parent) {
                     window.parent.postMessage({ type: 'menu:action', data: payload }, '*');
@@ -335,7 +356,7 @@
                 console.warn('parent.postMessage failed', err);
             }
 
-            // 5) CustomEvent for any listener in the page
+            // 5) CustomEvent
             try {
                 window.dispatchEvent(new CustomEvent('menu:action', { detail: payload }));
                 console.log('Dispatched CustomEvent menu:action');
@@ -343,7 +364,7 @@
                 console.warn('CustomEvent dispatch failed', err);
             }
 
-            // 6) If the runtime exposes a direct function, try invoking it safely
+            // 6) Try direct functions
             try {
                 if (typeof window.TriggerLuaEvent === 'function') {
                     try { window.TriggerLuaEvent('menu:action', payload); console.log('Called TriggerLuaEvent'); } catch(e){/*ignore*/ }
@@ -417,7 +438,7 @@
 
             const notification = document.createElement('div');
             notification.className = 'notification-box';
-            let actionMessage = action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ').replace(/_/g, ' ');
+            let actionMessage = action ? (action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ').replace(/_/g, ' ')) : '';
             const htmlContent = `
                 <div class="content">
                     <div class="icon-group"><i class="fa-solid fa-check-circle"></i></div>
@@ -455,7 +476,7 @@
                 const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
                 const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
                 if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
-                    // will be handled when moving selection
+                    // handled elsewhere
                 }
             } else {
                 menuItemsContainer.scrollTop = 0;
@@ -642,6 +663,130 @@
                     updateSelection();
                     updateScrollIndicator();
                 });
+            }
+        });
+
+        // Wheel scrolling support for mouse
+        menuItemsContainer.addEventListener('wheel', (ev) => {
+            ev.preventDefault();
+            menuItemsContainer.scrollTop += ev.deltaY;
+            updateScrollIndicator();
+
+            // keep selector aligned with selected item
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (selectedItem) {
+                const idx = Array.from(currentItems).indexOf(selectedItem);
+                selector.style.transition = 'none';
+                selector.style.transform = `translateY(${idx * itemHeight}px)`;
+                requestAnimationFrame(() => selector.style.transition = 'transform .25s ease');
+            }
+        }, { passive: false });
+
+        // Handle incoming custom menu messages re-dispatched earlier
+        window.addEventListener('menu:message', (ev) => {
+            const payload = ev.detail;
+            if (!payload || !payload.type) return;
+
+            if (payload.type === 'menu_update') {
+                // payload expected shape:
+                // { type: 'menu_update', menu: 'main'|'player'|..., isSubmenu: bool, index: zero_based_index, items: [{action,text,type,state}, ...], footer: {current,total} }
+                const menuName = payload.menu || 'main';
+                const isSub = !!payload.isSubmenu;
+                const index = (payload.index != null) ? Number(payload.index) : 0;
+                const items = Array.isArray(payload.items) ? payload.items : [];
+                const footer = payload.footer || {};
+
+                // switch visible menu
+                if (isSub) {
+                    menuItemsContainer.classList.add('submenu-active');
+                    document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active-tab'));
+                    const submenuEl = document.getElementById(menuName + 'Submenu');
+                    if (submenuEl) submenuEl.classList.add('active-tab');
+                    document.getElementById('mainMenuTab').style.display = 'none';
+                    document.querySelectorAll('.menu-bar-sub-tab').forEach(t => t.style.display = 'flex');
+                    // set currentItems reference
+                    currentItems = allSubmenuItems[menuName] || currentItems;
+                } else {
+                    menuItemsContainer.classList.remove('submenu-active');
+                    document.getElementById('mainMenuTab').style.display = 'flex';
+                    document.querySelectorAll('.menu-bar-sub-tab').forEach(t => t.style.display = 'none');
+                    currentItems = mainMenuItems;
+                }
+
+                // Update DOM items for the current container
+                let containerEl = !isSub ? document.querySelector('.main-menu') : document.getElementById(menuName + 'Submenu');
+                if (!containerEl) containerEl = document.querySelector('.main-menu');
+                const domItems = Array.from(containerEl.querySelectorAll('.menu-item'));
+
+                // Update each dom item from payload items (text + checkbox state)
+                domItems.forEach((dom, i) => {
+                    dom.classList.remove('selected');
+                    const src = items[i];
+                    if (!src) return;
+                    const span = dom.querySelector('span');
+                    if (span && src.text) span.textContent = src.text;
+                    const cb = dom.querySelector('.checkbox');
+                    if (cb) {
+                        if (src.type === 'toggle' && src.state) cb.classList.add('on');
+                        else cb.classList.remove('on');
+                    }
+                });
+
+                // Clamp index to the dom items length
+                const selIndex = Math.max(0, Math.min(domItems.length - 1, index));
+                if (domItems[selIndex]) {
+                    domItems[selIndex].classList.add('selected');
+
+                    // Move selector visually
+                    selector.style.transition = 'transform .25s ease';
+                    selector.style.transform = `translateY(${selIndex * itemHeight}px)`;
+
+                    // Ensure the selected item is visible and centered
+                    try {
+                        domItems[selIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
+                    } catch (err) {
+                        const desiredTop = selIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
+                        menuItemsContainer.scrollTop = Math.max(0, desiredTop);
+                    }
+                }
+
+                // Update currentItems and numItems references used by keyboard handlers
+                currentItems = domItems;
+                numItems = currentItems.length;
+
+                // Update footer
+                try {
+                    const footerRight = document.querySelector('.menu-footer .right');
+                    if (footerRight) footerRight.textContent = (footer.current || (selIndex + 1)) + '/' + (footer.total || numItems);
+                } catch (e) {}
+
+                updateScrollIndicator();
+            }
+
+            if (payload.type === 'menu_notify') {
+                const title = payload.title || 'Action Confirmed';
+                const message = payload.message || '';
+                const existingNotification = document.querySelector('.notification-box');
+                if (existingNotification) existingNotification.remove();
+
+                const notification = document.createElement('div');
+                notification.className = 'notification-box';
+                notification.innerHTML = `
+                    <div class="content">
+                        <div class="icon-group"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="text-group">
+                            <div class="title">${title}</div>
+                            <div class="message">${message}</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.classList.add('show'), 10);
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    notification.classList.add('hide');
+                    setTimeout(() => notification.remove(), NOTI_TRANSITION);
+                }, NOTI_DURATION);
             }
         });
 
