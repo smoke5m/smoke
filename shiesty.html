@@ -3,16 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Freecam Menu UI</title>
+<title>Freecam Menu</title>
+
+<!-- Load a custom font -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+
 <style>
   body {
     margin: 0;
     background-color: transparent;
-    font-family: "Arial", sans-serif;
+    font-family: 'Orbitron', sans-serif; /* custom font applied */
     overflow: hidden;
   }
 
-  /* Crosshair */
   #crosshair {
     position: absolute;
     left: 50%;
@@ -23,7 +26,6 @@
     text-shadow: 2px 2px 8px #000;
   }
 
-  /* Feature list container */
   #features-container {
     position: absolute;
     left: 50%;
@@ -35,8 +37,8 @@
   }
 
   .feature {
-    font-size: 1.6rem; /* slightly bigger */
-    font-weight: 900; /* bolder */
+    font-size: 1.6rem;
+    font-weight: 900;
     color: #fff;
     text-shadow: 2px 2px 10px #000;
     margin: 8px 0;
@@ -54,10 +56,7 @@
 <body>
 
 <div id="crosshair">•</div>
-
-<div id="features-container">
-  <!-- Features will be inserted here -->
-</div>
+<div id="features-container"></div>
 
 <script>
   const features = ["Look-Around", "Teleport", "Lock Doors", "Unlock Doors", "Copy Outfit"];
@@ -76,30 +75,11 @@
     });
   }
 
-  let lastScrollTime = 0;
-  const scrollCooldown = 150; // milliseconds between scrolls
-
-  // Scroll with mouse wheel (slower)
-  document.addEventListener("wheel", (e) => {
-    const now = Date.now();
-    if (now - lastScrollTime < scrollCooldown) return; // wait until cooldown
-
-    if (e.deltaY < 0) {
-      currentIndex = (currentIndex - 1 + features.length) % features.length;
-    } else if (e.deltaY > 0) {
-      currentIndex = (currentIndex + 1) % features.length;
-    }
-    renderFeatures();
-    lastScrollTime = now;
-  });
-
-  // Scroll with arrow keys
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowUp") {
-      currentIndex = (currentIndex - 1 + features.length) % features.length;
-      renderFeatures();
-    } else if (e.key === "ArrowDown") {
-      currentIndex = (currentIndex + 1) % features.length;
+  // Listen to messages from Lua
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (data.type === "highlight") {
+      currentIndex = data.index;
       renderFeatures();
     }
   });
