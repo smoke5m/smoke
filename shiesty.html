@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>smoke Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -173,7 +173,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">smoke</div>
+                <div class="menu-header">shiesty</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -253,7 +253,6 @@
         const data = event.data;
         if (!data || !data.type) return;
 
-        // If it's a key event proxy from Lua (keydown/keyup), create and dispatch keyboard event
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
@@ -264,7 +263,6 @@
             return;
         }
 
-        // If it's a menu_update or menu_notify from Lua (MachoSendDuiMessage), normalize and re-dispatch
         if (data.type === 'menu_update' || data.type === 'menu_notify') {
             let payload = data;
             try {
@@ -274,7 +272,7 @@
                     if (inner) payload = inner;
                 }
             } catch (e) {
-                // ignore parse errors and use original
+                // Ignore parse errors and use original
             }
             window.dispatchEvent(new CustomEvent('menu:message', { detail: payload }));
             return;
@@ -294,7 +292,7 @@
         let currentMenu = 'main';
         let holdInterval = null;
         let isHolding = false;
-        let lastScrollTime = 0; // For debouncing scroll events
+        let lastScrollTime = 0;
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height')) || 8;
@@ -310,7 +308,6 @@
         currentItems[0].classList.add('selected');
         let numItems = currentItems.length;
 
-        // Robust sendToLua: tries several common bridges
         function sendToLua(message) {
             const payload = (typeof message === 'string') ? message : JSON.stringify(message);
             console.log('LUA_MESSAGE_OUT:', payload);
@@ -374,10 +371,9 @@
             }
         }
 
-        function sendSelectionToLua() {
-            const selectedItem = document.querySelector('.menu-item.selected');
+        function sendSelectionToLua(index) {
+            const selectedItem = currentItems[index];
             if (selectedItem) {
-                const index = Array.from(currentItems).indexOf(selectedItem);
                 const message = {
                     type: 'selection_update',
                     menu: currentMenu,
@@ -456,55 +452,39 @@
             }, NOTI_DURATION);
         }
 
-        function updateSelection() {
+        function updateSelection(index) {
             const selectedItem = document.querySelector('.menu-item.selected');
-            if (!selectedItem) {
-                document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
-                selector.style.transform = `translateY(-${itemHeight}px)`;
-                updateScrollIndicator();
-                return;
-            }
+            if (selectedItem) selectedItem.classList.remove('selected');
 
-            const selectedIndex = Array.from(currentItems).indexOf(selectedItem);
-            selector.style.transform = `translateY(${selectedIndex * itemHeight}px)`;
-            document.querySelector('.menu-footer .right').textContent = `${selectedIndex + 1}/${numItems}`;
+            if (index >= 0 && index < currentItems.length) {
+                currentItems[index].classList.add('selected');
+                selector.style.transform = `translateY(${index * itemHeight}px)`;
+                document.querySelector('.menu-footer .right').textContent = `${index + 1}/${numItems}`;
 
-            if (numItems > MAX_VISIBLE_ITEMS) {
                 const topVisibleIndex = Math.floor(menuItemsContainer.scrollTop / itemHeight);
                 const bottomVisibleIndex = topVisibleIndex + MAX_VISIBLE_ITEMS - 1;
-                if (selectedIndex < topVisibleIndex || selectedIndex > bottomVisibleIndex) {
-                    // handled elsewhere
+                if (index < topVisibleIndex) {
+                    menuItemsContainer.scrollTop = index * itemHeight;
+                } else if (index > bottomVisibleIndex) {
+                    menuItemsContainer.scrollTop = (index - MAX_VISIBLE_ITEMS + 1) * itemHeight;
                 }
             } else {
-                menuItemsContainer.scrollTop = 0;
+                document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
+                selector.style.transform = `translateY(-${itemHeight}px)`;
             }
             updateScrollIndicator();
         }
 
         function moveSelection(direction) {
-            const items = currentItems;
-            const current = document.querySelector('.menu-item.selected');
-            let index = Array.from(items).indexOf(current);
-            if (current) current.classList.remove('selected');
+            let index = Array.from(currentItems).indexOf(document.querySelector('.menu-item.selected'));
+            if (index === -1) index = 0;
 
             index += direction;
-            if (index < 0) index = items.length - 1;
-            if (index >= items.length) index = 0;
+            if (index < 0) index = currentItems.length - 1;
+            if (index >= currentItems.length) index = 0;
 
-            items[index].classList.add('selected');
-
-            selector.style.transform = `translateY(${index * itemHeight}px)`;
-
-            try {
-                items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } catch (err) {
-                const desiredTop = index * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
-                menuItemsContainer.scrollTop = Math.max(0, desiredTop);
-            }
-
-            document.querySelector('.menu-footer .right').textContent = `${index + 1}/${items.length}`;
-            updateScrollIndicator();
-            sendSelectionToLua();
+            updateSelection(index);
+            sendSelectionToLua(index);
         }
 
         function setActiveSubTab(tabKey) {
@@ -522,8 +502,8 @@
 
             menuItemsContainer.scrollTop = 0;
             updateMenuBar();
-            updateSelection();
-            sendSelectionToLua();
+            updateSelection(0);
+            sendSelectionToLua(0);
         }
 
         function switchToSubmenu() {
@@ -548,8 +528,8 @@
             currentItems[0].classList.add('selected');
             menuItemsContainer.scrollTop = 0;
             updateMenuBar();
-            updateSelection();
-            sendSelectionToLua();
+            updateSelection(0);
+            sendSelectionToLua(0);
         }
 
         function switchSubTab(direction) {
@@ -568,7 +548,6 @@
                 const action = item.dataset.action;
                 showNotification(action, state ? 'Enabled' : 'Disabled');
 
-                // send action with explicit state to Lua
                 const message = {
                     type: 'action',
                     menu: currentMenu,
@@ -581,13 +560,11 @@
         }
 
         function executeAction(action) {
-            // non-toggle actions: send action to Lua (no state)
             const message = { type: 'action', menu: currentMenu, action: action };
             sendToLua(message);
             showNotification(action);
         }
 
-        // KEY HANDLERS
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -597,7 +574,6 @@
                 const direction = e.key === 'ArrowDown' ? 1 : -1;
                 moveSelection(direction);
 
-                // auto-repeat while key is held
                 holdInterval = setInterval(() => {
                     moveSelection(direction);
                 }, 200);
@@ -608,9 +584,7 @@
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
 
-                // For main menu player entry, open submenu locally
                 if (currentMenu === 'main') {
-                    // send action to Lua too
                     sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
                     if (action === 'player') {
                         switchToSubmenu();
@@ -643,12 +617,12 @@
                 clearInterval(holdInterval);
                 holdInterval = null;
                 isHolding = false;
-                updateSelection();
-                updateScrollIndicator();
+                const index = Array.from(currentItems).indexOf(document.querySelector('.menu-item.selected'));
+                updateSelection(index);
+                sendSelectionToLua(index);
             }
         });
 
-        // Wheel scrolling support with debounce
         let scrollTimeout = null;
         menuItemsContainer.addEventListener('wheel', (ev) => {
             ev.preventDefault();
@@ -656,15 +630,19 @@
             if (scrollTimeout) clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 updateScrollIndicator();
-                const selectedItem = document.querySelector('.menu-item.selected');
-                if (selectedItem) {
-                    const idx = Array.from(currentItems).indexOf(selectedItem);
-                    selector.style.transform = `translateY(${idx * itemHeight}px)`;
+                const scrollTop = menuItemsContainer.scrollTop;
+                const index = Math.round(scrollTop / itemHeight);
+                if (index >= 0 && index < currentItems.length) {
+                    const selectedItem = document.querySelector('.menu-item.selected');
+                    if (selectedItem) selectedItem.classList.remove('selected');
+                    currentItems[index].classList.add('selected');
+                    selector.style.transform = `translateY(${index * itemHeight}px)`;
+                    document.querySelector('.menu-footer .right').textContent = `${index + 1}/${numItems}`;
+                    sendSelectionToLua(index);
                 }
             }, 100);
         }, { passive: false });
 
-        // Handle incoming custom menu messages
         window.addEventListener('menu:message', (ev) => {
             const payload = ev.detail;
             if (!payload || !payload.type) return;
@@ -676,7 +654,6 @@
                 const items = Array.isArray(payload.items) ? payload.items : [];
                 const footer = payload.footer || {};
 
-                // Update tab visuals
                 if (isSub) {
                     isSubmenuActive = true;
                     menuItemsContainer.classList.add('submenu-active');
@@ -704,12 +681,10 @@
                     });
                 }
 
-                // Determine container for DOM items
                 let containerEl = !isSub ? document.querySelector('.main-menu') : document.getElementById(menuName + 'Submenu');
                 if (!containerEl) containerEl = document.querySelector('.main-menu');
                 const domItems = Array.from(containerEl.querySelectorAll('.menu-item'));
 
-                // Update DOM items from payload
                 domItems.forEach((dom, i) => {
                     dom.classList.remove('selected');
                     const src = items[i];
@@ -723,39 +698,13 @@
                     }
                 });
 
-                // Update selection and scroll
-                const selIndex = Math.max(0, Math.min(domItems.length - 1, index));
-                if (domItems[selIndex]) {
-                    domItems[selIndex].classList.add('selected');
-                    selector.style.transform = `translateY(${selIndex * itemHeight}px)`;
+                currentItems = domItems;
+                numItems = currentItems.length;
+                updateSelection(index);
 
-                    try {
-                        domItems[selIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } catch (err) {
-                        const desiredTop = selIndex * itemHeight - (menuItemsContainer.clientHeight - itemHeight) / 2;
-                        menuItemsContainer.scrollTop = Math.max(0, desiredTop);
-                    }
-
-                    currentItems = domItems;
-                    numItems = currentItems.length;
-                    updateScrollIndicator();
-
-                    if (isSub) {
-                        subTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tabKey === menuName));
-                        mainMenuTab.classList.remove('main-active');
-                    } else {
-                        mainMenuTab.classList.add('main-active');
-                    }
-                } else {
-                    currentItems = domItems;
-                    numItems = currentItems.length;
-                    updateScrollIndicator();
-                }
-
-                // Update footer
                 try {
                     const footerRight = document.querySelector('.menu-footer .right');
-                    if (footerRight) footerRight.textContent = (footer.current || (selIndex + 1)) + '/' + (footer.total || numItems);
+                    if (footerRight) footerRight.textContent = (footer.current || (index + 1)) + '/' + (footer.total || numItems);
                 } catch (e) {}
             } else if (payload.type === 'menu_notify') {
                 const title = payload.title || 'Action Confirmed';
@@ -784,24 +733,10 @@
             }
         });
 
-        // Initialize
         updateMenuBar();
-        updateSelection();
-        sendSelectionToLua();
+        updateSelection(0);
+        sendSelectionToLua(0);
         updateScrollIndicator();
-
-        // Keep scroll indicator in sync with debounce
-        menuItemsContainer.addEventListener('scroll', () => {
-            if (scrollTimeout) clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                updateScrollIndicator();
-                const selectedItem = document.querySelector('.menu-item.selected');
-                if (selectedItem) {
-                    const idx = Array.from(currentItems).indexOf(selectedItem);
-                    selector.style.transform = `translateY(${idx * itemHeight}px)`;
-                }
-            }, 100);
-        });
     });
 </script>
 
