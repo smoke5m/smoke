@@ -210,6 +210,78 @@
         .menu-item.selected .value-range {
             opacity: 1;
         }
+        
+        /* --- NEW INPUT BOX STYLES --- */
+        #inputOverlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex; 
+            justify-content: center; /* Center horizontally */
+            align-items: flex-end; 
+            pointer-events: none; 
+            z-index: 999;
+        }
+
+        #inputOverlay[style*="display: block"] {
+            pointer-events: auto; 
+        }
+        
+        .ui-container {
+            width: 100%;
+            max-width: 600px;
+            /* Adjusted margin-bottom to move it up */
+            margin-bottom: 100px; 
+        }
+
+        .vehicle-input-wrapper {
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.925);
+            padding: 3px 10px 0; 
+        }
+
+        .vehicle-input-header {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            padding-bottom: 0px; 
+        }
+
+        .vehicle-icon {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border: 1px solid #ffffff; 
+            margin-right: 8px;
+            transform: rotate(45deg); 
+        }
+
+        .purple-separator {
+            border: none;
+            height: 2px;
+            background-color: #9900ff;
+            width: 100%;
+            margin: 0 0 3px 0;
+        }
+
+        .vehicle-name-input {
+            width: 100%;
+            padding: 5px 10px; 
+            font-size: 14px;
+            border-radius: 4px;
+            color: #ffffff;
+            background-color: #1a1a1a;
+            box-sizing: border-box; 
+            margin-bottom: 5px;
+            border: none;
+        }
+        
+        .vehicle-name-input:focus {
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -289,6 +361,15 @@
                         <div class="menu-item" data-action="change-tshirt"><span>Tshirt</span><div class="value-range">< - 1 - ></div></div>
                         <div class="menu-item" data-action="change-pants"><span>Pants</span><div class="value-range">< - 1 - ></div></div>
                         <div class="menu-item" data-action="change-shoes"><span>Shoes</span><div class="value-range">< - 1 - ></div></div>
+                    
+                        <div class="menu-separator">
+                            <hr class="separator-line left-line">
+                            <span class="separator-text">Model</span>
+                            <hr class="separator-line right-line">
+                        </div>    
+                        
+                        <div class="menu-item" data-action="model-changer"><span>Model Changer</span></div>
+                    
                     </div>
                 </div>
             </div>
@@ -304,8 +385,22 @@
             <div class="right">1/9</div>
         </div>
     </div>
-
-<script>
+    
+    <div id="inputOverlay" style="display: none;">
+        <div class="ui-container">
+            <div class="vehicle-input-wrapper">
+                <div class="vehicle-input-header">
+                    <i class="vehicle-icon" aria-hidden="true"></i> 
+                    input
+                </div>
+                
+                <hr class="purple-separator">
+                
+                <input type="text" id="modelChangerInput" class="vehicle-name-input" placeholder="Enter model name...">
+            </div>
+        </div>
+    </div>
+    <script>
     // Global message handler (handles both key events from Lua and 'menu_update'/'menu_notify' from Lua)
     window.addEventListener('message', (event) => {
         const data = event.data;
@@ -345,6 +440,24 @@
         const mainMenuTab = document.getElementById('mainMenuTab');
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
         let subTabIndex = 0;
+
+        // --- NEW: Input box elements and state ---
+        let isInputActive = false;
+        const modelChangerInput = document.getElementById('modelChangerInput');
+        const inputOverlay = document.getElementById('inputOverlay');
+
+        function showModelChangerInput() {
+            isInputActive = true;
+            inputOverlay.style.display = 'flex'; // Use flex to center the content
+            modelChangerInput.focus(); // Auto-focus the input field
+        }
+
+        function hideModelChangerInput(clear = true) {
+            isInputActive = false;
+            inputOverlay.style.display = 'none';
+            if (clear) modelChangerInput.value = '';
+        }
+        // --- END NEW: Input box elements and state ---
 
         let isSubmenuActive = false;
         let currentMenu = 'main';
@@ -688,6 +801,9 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
+                // If input is active, allow arrow keys to move the cursor inside the input, don't move the menu selection.
+                if (isInputActive) return; 
+
                 if (holdInterval) return;
 
                 isHolding = true;
@@ -697,7 +813,40 @@
                 holdInterval = setInterval(() => {
                     moveSelection(direction);
                 }, 200);
-            } else if (isSubmenuActive) {
+            } 
+            
+            // --- NEW: Input box active key handlers ---
+            if (isInputActive) {
+                // If input is active, only process 'Enter', 'Escape', or 'Backspace' for control
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const modelName = modelChangerInput.value.trim();
+                    if (modelName) {
+                        const message = { 
+                            type: 'action', 
+                            menu: 'appearance', 
+                            action: 'set-model', 
+                            value: modelName,
+                            itemText: 'Model Changer'
+                        };
+                        sendToLua(message);
+                        showNotification('Model Changer', `Model set to: ${modelName}`);
+                    } else {
+                        // User pressed enter without typing.
+                        showNotification('Model Changer', 'Input cancelled (empty)');
+                    }
+                    hideModelChangerInput();
+                } else if (e.key === 'Escape' || (e.key === 'Backspace' && modelChangerInput.value.length === 0)) {
+                    // Only hide on backspace if input is empty, otherwise let backspace work normally
+                    if (e.key === 'Escape') e.preventDefault();
+                    showNotification('Model Changer', 'Input cancelled');
+                    hideModelChangerInput();
+                }
+                return; // Stop processing menu keys if input is active
+            }
+            // --- END NEW: Input box active key handlers ---
+            
+            if (isSubmenuActive) {
                 const selectedItem = document.querySelector('.menu-item.selected');
                 const action = selectedItem ? selectedItem.dataset.action : null;
 
@@ -745,6 +894,15 @@
                 const selectedItem = document.querySelector('.menu-item.selected');
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
+
+                // --- NEW: Model Changer menu activation logic ---
+                if (action === 'model-changer') {
+                    if (currentMenu === 'appearance') {
+                        showModelChangerInput();
+                        return; // Stop menu processing and let the input box take over
+                    }
+                }
+                // --- END NEW ---
 
                 if (currentMenu === 'main') {
                     sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
@@ -801,6 +959,9 @@
 
         let scrollTimeout = null;
         menuItemsContainer.addEventListener('wheel', (ev) => {
+            // Prevent scrolling if the input box is open
+            if (isInputActive) return; 
+            
             ev.preventDefault();
             menuItemsContainer.scrollTop += ev.deltaY;
             
