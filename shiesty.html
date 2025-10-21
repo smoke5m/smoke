@@ -224,7 +224,7 @@
             z-index: 999;
         }
 
-        #inputOverlay[style*="display: block"] {
+        #inputOverlay[style*="display: flex"] { /* Check for flex, as it's the intended show state */
             pointer-events: auto; 
         }
         
@@ -330,18 +330,18 @@
                         <div class="menu-item" data-action="revive"><span>Revive</span><span></span></div>
                         <div class="menu-item" data-action="health"><span>Health</span><span></span></div>
                         <div class="menu-item" data-action="armor"><span>Armor</span><span></span></div>
-                        <div class="menu-item" data-action="godmode"><span>Godmode</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="noclip"><span>Noclip [U]</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="freecam"><span>Freecam [H]</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="invisible"><span>Invisible</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="no_ragdoll"><span>No Ragdoll</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="infinite_stamina"><span>Infinite Stamina</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="super_jump"><span>Super Jump</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="super_punch"><span>Super Punch</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="throw_from_vehicle"><span>Throw From Vehicle</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="name_tags"><span>Name Tags</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="crosshair"><span>Crosshair</span><span class="checkbox"></span></div>
-                        <div class="menu-item" data-action="fast_run"><span>Fast Run</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="godmode"><span class="checkbox-text">Godmode</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="noclip"><span class="checkbox-text">Noclip [U]</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="freecam"><span class="checkbox-text">Freecam [H]</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="invisible"><span class="checkbox-text">Invisible</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="no_ragdoll"><span class="checkbox-text">No Ragdoll</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="infinite_stamina"><span class="checkbox-text">Infinite Stamina</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="super_jump"><span class="checkbox-text">Super Jump</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="super_punch"><span class="checkbox-text">Super Punch</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="throw_from_vehicle"><span class="checkbox-text">Throw From Vehicle</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="name_tags"><span class="checkbox-text">Name Tags</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="crosshair"><span class="checkbox-text">Crosshair</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="fast_run"><span class="checkbox-text">Fast Run</span><span class="checkbox"></span></div>
                     </div>
 
                     <div id="appearanceSubmenu" class="sub-tab-content">
@@ -433,6 +433,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        const menuContainer = document.querySelector('.menu-container'); // Added for input overlay
         const menuItemsContainer = document.getElementById('menuItems');
         const selector = document.getElementById('selector');
         const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
@@ -450,12 +451,16 @@
             isInputActive = true;
             inputOverlay.style.display = 'flex'; // Use flex to center the content
             modelChangerInput.focus(); // Auto-focus the input field
+            // Optional: Dim main menu
+            menuContainer.style.opacity = '0.4';
         }
 
         function hideModelChangerInput(clear = true) {
             isInputActive = false;
             inputOverlay.style.display = 'none';
             if (clear) modelChangerInput.value = '';
+            // Optional: Restore main menu opacity
+            menuContainer.style.opacity = '1';
         }
         // --- END NEW: Input box elements and state ---
 
@@ -799,25 +804,10 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                // If input is active, allow arrow keys to move the cursor inside the input, don't move the menu selection.
-                if (isInputActive) return; 
-
-                if (holdInterval) return;
-
-                isHolding = true;
-                const direction = e.key === 'ArrowDown' ? 1 : -1;
-                moveSelection(direction);
-
-                holdInterval = setInterval(() => {
-                    moveSelection(direction);
-                }, 200);
-            } 
             
-            // --- NEW: Input box active key handlers ---
+            // --- INPUT BOX ACTIVE KEY HANDLERS (PRIORITY) ---
             if (isInputActive) {
-                // If input is active, only process 'Enter', 'Escape', or 'Backspace' for control
+                // If input is active, only process 'Enter', 'Escape'
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const modelName = modelChangerInput.value.trim();
@@ -836,21 +826,34 @@
                         showNotification('Model Changer', 'Input cancelled (empty)');
                     }
                     hideModelChangerInput();
-                } else if (e.key === 'Escape' || (e.key === 'Backspace' && modelChangerInput.value.length === 0)) {
-                    // Only hide on backspace if input is empty, otherwise let backspace work normally
-                    if (e.key === 'Escape') e.preventDefault();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
                     showNotification('Model Changer', 'Input cancelled');
                     hideModelChangerInput();
                 }
                 return; // Stop processing menu keys if input is active
             }
-            // --- END NEW: Input box active key handlers ---
+            // --- END INPUT BOX ACTIVE KEY HANDLERS ---
+            
+            // --- REGULAR MENU KEY HANDLERS ---
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (holdInterval) return;
+
+                isHolding = true;
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+                moveSelection(direction);
+
+                holdInterval = setInterval(() => {
+                    moveSelection(direction);
+                }, 200);
+            } 
             
             if (isSubmenuActive) {
                 const selectedItem = document.querySelector('.menu-item.selected');
                 const action = selectedItem ? selectedItem.dataset.action : null;
 
-                // --- ADDED: Value Range Navigation and Update ---
+                // --- Value Range Navigation and Update ---
                 if (action && valueRangeState.hasOwnProperty(action)) {
                     let currentValue = valueRangeState[action];
                     let direction = 0;
@@ -895,14 +898,12 @@
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
 
-                // --- NEW: Model Changer menu activation logic ---
+                // --- INTERCEPT: Model Changer menu activation logic ---
                 if (action === 'model-changer') {
-                    if (currentMenu === 'appearance') {
-                        showModelChangerInput();
-                        return; // Stop menu processing and let the input box take over
-                    }
+                    showModelChangerInput(); // Launch the input box
+                    return; // Crucial: Stops the 'Enter' key from proceeding to executeAction
                 }
-                // --- END NEW ---
+                // --- END INTERCEPT ---
 
                 if (currentMenu === 'main') {
                     sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
@@ -916,7 +917,7 @@
                     if (selectedItem.querySelector('.checkbox')) {
                         toggleCheckbox(selectedItem);
                     } else if (valueRangeState.hasOwnProperty(action)) {
-                        // --- MODIFIED: Execute value-range action with current value ---
+                        // --- Execute value-range action with current value ---
                         const currentValue = valueRangeState[action];
                         const message = { 
                             type: 'action', 
