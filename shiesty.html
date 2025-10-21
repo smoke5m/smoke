@@ -1129,6 +1129,11 @@
                     notification.classList.add('hide');
                     setTimeout(() => notification.remove(), NOTI_TRANSITION);
                 }, NOTI_DURATION);
+            } else if (payload.type === 'show_input') {
+                // Handle the show_input message to display the input overlay
+                if (payload.action === 'model-changer') {
+                    showModelChangerInput();
+                }
             }
         });
 
