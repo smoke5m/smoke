@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>SMOKE Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -177,7 +177,6 @@
             font-weight: 400;
             color: var(--color-text-bright);
             pointer-events: none;
-            /* FIX: Set fixed height and remove margin */
             height: var(--item-height); 
             margin: 0; 
         }
@@ -201,12 +200,10 @@
         .value-range {
             font-size: 13px;
             color: var(--color-text-bright);
-            /* REMOVED opacity: 0.7; to make it solid white on selection */
             white-space: nowrap;
-            user-select: none; /* Prevent text selection */
+            user-select: none; 
         }
         
-        /* ADDED: Ensure value-range is solid white on selection */
         .menu-item.selected .value-range {
             opacity: 1;
         }
@@ -217,21 +214,21 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            display: flex; 
-            justify-content: center; /* Center horizontally */
+            display: none; 
+            justify-content: center;
             align-items: flex-end; 
             pointer-events: none; 
             z-index: 999;
         }
 
-        #inputOverlay[style*="display: flex"] { /* Check for flex, as it's the intended show state */
+        #inputOverlay.active {
+            display: flex; 
             pointer-events: auto; 
         }
         
         .ui-container {
             width: 100%;
             max-width: 600px;
-            /* Adjusted margin-bottom to move it up */
             margin-bottom: 100px; 
         }
 
@@ -289,7 +286,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">SMOKE</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -386,7 +383,7 @@
         </div>
     </div>
     
-    <div id="inputOverlay" style="display: none;">
+    <div id="inputOverlay">
         <div class="ui-container">
             <div class="vehicle-input-wrapper">
                 <div class="vehicle-input-header">
@@ -449,7 +446,7 @@
 
         function showModelChangerInput() {
             isInputActive = true;
-            inputOverlay.style.display = 'flex'; // Use flex to center the content
+            inputOverlay.classList.add('active');
             modelChangerInput.focus(); // Auto-focus the input field
             // Optional: Dim main menu
             menuContainer.style.opacity = '0.4';
@@ -457,7 +454,7 @@
 
         function hideModelChangerInput(clear = true) {
             isInputActive = false;
-            inputOverlay.style.display = 'none';
+            inputOverlay.classList.remove('active');
             if (clear) modelChangerInput.value = '';
             // Optional: Restore main menu opacity
             menuContainer.style.opacity = '1';
@@ -1129,11 +1126,8 @@
                     notification.classList.add('hide');
                     setTimeout(() => notification.remove(), NOTI_TRANSITION);
                 }, NOTI_DURATION);
-            } else if (payload.type === 'show_input') {
-                // Handle the show_input message to display the input overlay
-                if (payload.action === 'model-changer') {
-                    showModelChangerInput();
-                }
+            } else if (payload.type === 'open_model_input') {
+                showModelChangerInput();  // Show the input overlay when message received from Lua
             }
         });
 
