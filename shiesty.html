@@ -15,7 +15,7 @@
             --color-black-section: #0A0A0A;
             --color-text-bright: #FFFFFF;
             --item-height: 26px;
-            --selector-height: 25px;
+            --selector-height: 27px;
             --menu-width: 320px;
             --checkbox-off-color: #ffffff;
             --checkbox-on-color: #f500f0;
@@ -350,13 +350,13 @@
                             <hr class="separator-line right-line">
                         </div>
 
-                        <div class="menu-item" data-action="skin_head"><span>Skin/Head</span><div class="value-range">< - 0 - ></div></div>
-                        <div class="menu-item" data-action="mask"><span>Mask</span><div class="value-range">< - 0 - ></div></div>
-                        <div class="menu-item" data-action="hair"><span>Hair</span><div class="value-range">< - 0 - ></div></div>
-                        <div class="menu-item" data-action="torso"><span>Torso</span><div class="value-range">< - 0 - ></div></div>
-                        <div class="menu-item" data-action="tshirt"><span>Tshirt</span><div class="value-range">< - 0 - ></div></div>
-                        <div class="menu-item" data-action="pants"><span>Pants</span><div class="value-range">< - 0 - ></div></div>
-                        <div class="menu-item" data-action="shoes"><span>Shoes</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="change-hat"><span>Hat</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-mask"><span>Mask</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-glasses"><span>Glasses</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-torso"><span>Torso</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-tshirt"><span>Tshirt</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-pants"><span>Pants</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-shoes"><span>Shoes</span><div class="value-range">< - 1 - ></div></div>
                     
                         <div class="menu-separator">
                             <hr class="separator-line left-line">
@@ -403,37 +403,6 @@
         if (!data || !data.type) return;
 
         if (data.type === 'keydown' || data.type === 'keyup') {
-            if (isInputActive) {
-                if (data.type === 'keyup') return;
-                // Manual handling for input
-                const keyName = data.key || '';
-                if (keyName === 'Enter') {
-                    const modelName = modelChangerInput.value.trim();
-                    if (modelName) {
-                        const message = { 
-                            type: 'action', 
-                            menu: 'appearance', 
-                            action: 'set-model', 
-                            value: modelName,
-                            itemText: 'Model Changer'
-                        };
-                        sendToLua(message);
-                        showNotification('Model Changer', `Model set to: ${modelName}`);
-                    } else {
-                        showNotification('Model Changer', 'Input cancelled (empty)');
-                    }
-                    hideModelChangerInput();
-                } else if (keyName === 'Escape') {
-                    showNotification('Model Changer', 'Input cancelled');
-                    hideModelChangerInput();
-                } else if (keyName === 'Backspace') {
-                    modelChangerInput.value = modelChangerInput.value.slice(0, -1);
-                } else if (keyName !== 'Unknown' && keyName.length === 1) {
-                    modelChangerInput.value += keyName;
-                }
-                return;
-            }
-
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
                 keyCode: data.keyCode || 0,
@@ -479,6 +448,7 @@
             inputOverlay.classList.add('active');
             modelChangerInput.focus();
             menuContainer.style.opacity = '0.4';
+            // Ensure input is focusable
             setTimeout(() => modelChangerInput.focus(), 100);
         }
 
@@ -497,13 +467,13 @@
 
         // --- State to track current numerical values for clothing items ---
         const valueRangeState = {
-            'skin_head': 0,
-            'mask': 0,
-            'hair': 0,
-            'torso': 0,
-            'tshirt': 0,
-            'pants': 0,
-            'shoes': 0
+            'change-hat': 1,
+            'change-mask': 1,
+            'change-glasses': 1,
+            'change-torso': 1,
+            'change-tshirt': 1,
+            'change-pants': 1,
+            'change-shoes': 1,
         };
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
@@ -841,8 +811,6 @@
                 }, 200);
             } 
             
-            // Comment out local value-range handling, let Lua handle it
-            /*
             if (isSubmenuActive) {
                 const selectedItem = document.querySelector('.menu-item.selected');
                 const action = selectedItem ? selectedItem.dataset.action : null;
@@ -861,7 +829,7 @@
 
                     if (direction !== 0) {
                         currentValue += direction;
-                        if (currentValue < 0) currentValue = 0; // Adjust min if needed
+                        if (currentValue < 1) currentValue = 1;
 
                         valueRangeState[action] = currentValue;
                         selectedItem.querySelector('.value-range').textContent = `< - ${currentValue} - >`;
@@ -876,7 +844,6 @@
                     }
                 }
             }
-            */
             
             if (e.key === 'Enter') {
                 e.preventDefault();
