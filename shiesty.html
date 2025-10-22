@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SMOKE Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -15,7 +15,7 @@
             --color-black-section: #0A0A0A;
             --color-text-bright: #FFFFFF;
             --item-height: 26px;
-            --selector-height: 27px;
+            --selector-height: 25px;
             --menu-width: 320px;
             --checkbox-off-color: #ffffff;
             --checkbox-on-color: #f500f0;
@@ -287,7 +287,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">SMOKE</div>
+                <div class="menu-header">shiesty</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -403,6 +403,37 @@
         if (!data || !data.type) return;
 
         if (data.type === 'keydown' || data.type === 'keyup') {
+            if (isInputActive) {
+                if (data.type === 'keyup') return;
+                // Manual handling for input
+                const keyName = data.key || '';
+                if (keyName === 'Enter') {
+                    const modelName = modelChangerInput.value.trim();
+                    if (modelName) {
+                        const message = { 
+                            type: 'action', 
+                            menu: 'appearance', 
+                            action: 'set-model', 
+                            value: modelName,
+                            itemText: 'Model Changer'
+                        };
+                        sendToLua(message);
+                        showNotification('Model Changer', `Model set to: ${modelName}`);
+                    } else {
+                        showNotification('Model Changer', 'Input cancelled (empty)');
+                    }
+                    hideModelChangerInput();
+                } else if (keyName === 'Escape') {
+                    showNotification('Model Changer', 'Input cancelled');
+                    hideModelChangerInput();
+                } else if (keyName === 'Backspace') {
+                    modelChangerInput.value = modelChangerInput.value.slice(0, -1);
+                } else if (keyName !== 'Unknown' && keyName.length === 1) {
+                    modelChangerInput.value += keyName;
+                }
+                return;
+            }
+
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
                 keyCode: data.keyCode || 0,
@@ -448,7 +479,6 @@
             inputOverlay.classList.add('active');
             modelChangerInput.focus();
             menuContainer.style.opacity = '0.4';
-            // Ensure input is focusable
             setTimeout(() => modelChangerInput.focus(), 100);
         }
 
