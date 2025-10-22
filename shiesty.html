@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SMOKE Menu Final Visuals - Selective Notifications</title>
+    <title>shiesty Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -287,7 +287,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">SMOKE</div>
+                <div class="menu-header">shiesty</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -771,9 +771,7 @@
             showNotification(action);
         }
 
-        // *** FIXED: SIMPLIFIED INPUT HANDLING - LET BROWSER HANDLE TYPING NATURALLY ***
         document.addEventListener('keydown', (e) => {
-            // When input is active, ONLY handle Enter/Escape - let ALL OTHER KEYS TYPE NORMALLY
             if (isInputActive) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -797,11 +795,9 @@
                     showNotification('Model Changer', 'Input cancelled');
                     hideModelChangerInput();
                 }
-                // *** LET ALL OTHER KEYS PASS THROUGH FOR TYPING ***
                 return;
             }
 
-            // NORMAL MENU NAVIGATION (when input is NOT active)
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (holdInterval) return;
