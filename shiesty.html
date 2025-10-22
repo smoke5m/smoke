@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>SMOKE Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -287,7 +287,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">SMOKE</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -350,13 +350,13 @@
                             <hr class="separator-line right-line">
                         </div>
 
-                        <div class="menu-item" data-action="change-hat"><span>Hat</span><div class="value-range">< - 1 - ></div></div>
-                        <div class="menu-item" data-action="change-mask"><span>Mask</span><div class="value-range">< - 1 - ></div></div>
-                        <div class="menu-item" data-action="change-glasses"><span>Glasses</span><div class="value-range">< - 1 - ></div></div>
-                        <div class="menu-item" data-action="change-torso"><span>Torso</span><div class="value-range">< - 1 - ></div></div>
-                        <div class="menu-item" data-action="change-tshirt"><span>Tshirt</span><div class="value-range">< - 1 - ></div></div>
-                        <div class="menu-item" data-action="change-pants"><span>Pants</span><div class="value-range">< - 1 - ></div></div>
-                        <div class="menu-item" data-action="change-shoes"><span>Shoes</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="skin_head"><span>Skin/Head</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="mask"><span>Mask</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="hair"><span>Hair</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="torso"><span>Torso</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="tshirt"><span>Tshirt</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="pants"><span>Pants</span><div class="value-range">< - 0 - ></div></div>
+                        <div class="menu-item" data-action="shoes"><span>Shoes</span><div class="value-range">< - 0 - ></div></div>
                     
                         <div class="menu-separator">
                             <hr class="separator-line left-line">
@@ -497,13 +497,13 @@
 
         // --- State to track current numerical values for clothing items ---
         const valueRangeState = {
-            'change-hat': 1,
-            'change-mask': 1,
-            'change-glasses': 1,
-            'change-torso': 1,
-            'change-tshirt': 1,
-            'change-pants': 1,
-            'change-shoes': 1,
+            'skin_head': 0,
+            'mask': 0,
+            'hair': 0,
+            'torso': 0,
+            'tshirt': 0,
+            'pants': 0,
+            'shoes': 0
         };
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
@@ -841,6 +841,8 @@
                 }, 200);
             } 
             
+            // Comment out local value-range handling, let Lua handle it
+            /*
             if (isSubmenuActive) {
                 const selectedItem = document.querySelector('.menu-item.selected');
                 const action = selectedItem ? selectedItem.dataset.action : null;
@@ -859,7 +861,7 @@
 
                     if (direction !== 0) {
                         currentValue += direction;
-                        if (currentValue < 1) currentValue = 1;
+                        if (currentValue < 0) currentValue = 0; // Adjust min if needed
 
                         valueRangeState[action] = currentValue;
                         selectedItem.querySelector('.value-range').textContent = `< - ${currentValue} - >`;
@@ -874,6 +876,7 @@
                     }
                 }
             }
+            */
             
             if (e.key === 'Enter') {
                 e.preventDefault();
