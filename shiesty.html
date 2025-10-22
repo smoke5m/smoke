@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>smoke Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -287,7 +287,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">smoke</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -773,8 +773,8 @@
 
         document.addEventListener('keydown', (e) => {
             if (isInputActive) {
+                e.preventDefault();
                 if (e.key === 'Enter') {
-                    e.preventDefault();
                     const modelName = modelChangerInput.value.trim();
                     if (modelName) {
                         const message = { 
@@ -791,9 +791,14 @@
                     }
                     hideModelChangerInput();
                 } else if (e.key === 'Escape') {
-                    e.preventDefault();
                     showNotification('Model Changer', 'Input cancelled');
                     hideModelChangerInput();
+                } else if (e.key === 'Backspace') {
+                    modelChangerInput.value = modelChangerInput.value.slice(0, -1);
+                } else if (e.key === 'Delete') {
+                    modelChangerInput.value = modelChangerInput.value.slice(0, -1); // Simple, no cursor position
+                } else if (e.key.length === 1 && /^[a-zA-Z0-9 _-]$/.test(e.key)) {
+                    modelChangerInput.value += e.key;
                 }
                 return;
             }
