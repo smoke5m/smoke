@@ -771,7 +771,9 @@
             showNotification(action);
         }
 
+        // *** FIXED: SIMPLIFIED INPUT HANDLING - LET BROWSER HANDLE TYPING NATURALLY ***
         document.addEventListener('keydown', (e) => {
+            // When input is active, ONLY handle Enter/Escape - let ALL OTHER KEYS TYPE NORMALLY
             if (isInputActive) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -795,9 +797,11 @@
                     showNotification('Model Changer', 'Input cancelled');
                     hideModelChangerInput();
                 }
+                // *** LET ALL OTHER KEYS PASS THROUGH FOR TYPING ***
                 return;
             }
 
+            // NORMAL MENU NAVIGATION (when input is NOT active)
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (holdInterval) return;
