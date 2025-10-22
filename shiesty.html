@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>SMOKE Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -278,6 +278,7 @@
         
         .vehicle-name-input:focus {
             outline: none;
+            box-shadow: 0 0 5px rgba(255, 0, 234, 0.82);
         }
     </style>
 </head>
@@ -286,15 +287,13 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">SMOKE</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
                 <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
-
                 <span class="menu-bar-tab menu-bar-sub-tab" id="playerSubTab" data-tab-key="player">Player</span>
                 <span class="menu-bar-tab menu-bar-sub-tab" id="appearanceSubTab" data-tab-key="appearance">Appearance</span>
-
             </div>
         </div>
 
@@ -366,7 +365,6 @@
                         </div>    
                         
                         <div class="menu-item" data-action="model-changer"><span>Model Changer</span></div>
-                    
                     </div>
                 </div>
             </div>
@@ -388,7 +386,7 @@
             <div class="vehicle-input-wrapper">
                 <div class="vehicle-input-header">
                     <i class="vehicle-icon" aria-hidden="true"></i> 
-                    input
+                    Model Changer
                 </div>
                 
                 <hr class="purple-separator">
@@ -397,6 +395,7 @@
             </div>
         </div>
     </div>
+
     <script>
     // Global message handler (handles both key events from Lua and 'menu_update'/'menu_notify' from Lua)
     window.addEventListener('message', (event) => {
@@ -430,7 +429,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        const menuContainer = document.querySelector('.menu-container'); // Added for input overlay
+        const menuContainer = document.querySelector('.menu-container');
         const menuItemsContainer = document.getElementById('menuItems');
         const selector = document.getElementById('selector');
         const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
@@ -439,7 +438,7 @@
         const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
         let subTabIndex = 0;
 
-        // --- NEW: Input box elements and state ---
+        // --- Input box elements and state ---
         let isInputActive = false;
         const modelChangerInput = document.getElementById('modelChangerInput');
         const inputOverlay = document.getElementById('inputOverlay');
@@ -447,27 +446,26 @@
         function showModelChangerInput() {
             isInputActive = true;
             inputOverlay.classList.add('active');
-            modelChangerInput.focus(); // Auto-focus the input field
-            // Optional: Dim main menu
+            modelChangerInput.focus();
             menuContainer.style.opacity = '0.4';
+            // Ensure input is focusable
+            setTimeout(() => modelChangerInput.focus(), 100);
         }
 
         function hideModelChangerInput(clear = true) {
             isInputActive = false;
             inputOverlay.classList.remove('active');
             if (clear) modelChangerInput.value = '';
-            // Optional: Restore main menu opacity
             menuContainer.style.opacity = '1';
         }
-        // --- END NEW: Input box elements and state ---
 
         let isSubmenuActive = false;
         let currentMenu = 'main';
         let holdInterval = null;
         let isHolding = false;
         let lastScrollTime = 0;
-        
-        // --- ADDED: State to track current numerical values for clothing items ---
+
+        // --- State to track current numerical values for clothing items ---
         const valueRangeState = {
             'change-hat': 1,
             'change-mask': 1,
@@ -477,7 +475,6 @@
             'change-pants': 1,
             'change-shoes': 1,
         };
-        // -------------------------------------------------------------------------
 
         const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
         const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height')) || 8;
@@ -486,7 +483,6 @@
         const NOTI_TRANSITION = 300;
 
         const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
-        // NOTE: The item lists are updated to only include elements with the .menu-item class
         const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
         const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
         const allSubmenuItems = { 'player': playerSubmenuItems, 'appearance': appearanceSubmenuItems };
@@ -511,16 +507,6 @@
             } catch (err) {
                 console.warn('fetch to https://menu:action threw:', err);
             }
-
-            try {
-                fetch('https://menuAction', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: payload
-                }).then(() => {
-                    console.log('Sent via fetch to https://menuAction');
-                }).catch(() => {});
-            } catch (err) {}
 
             try {
                 window.postMessage({ type: 'menu:action', data: payload }, '*');
@@ -584,7 +570,7 @@
             scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
             const thumbTrackHeight = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar').clientHeight;
             const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
-            const totalContentHeight = numItems * itemHeight; // This calculation is simplified and doesn't account for the new separator's actual height
+            const totalContentHeight = numItems * itemHeight;
 
             let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
                 ? thumbTrackHeight
@@ -593,15 +579,13 @@
 
             const maxThumbTravel = thumbTrackHeight - thumbHeight;
             let scrollPercentage = 0;
-            
-            // Recalculate max scroll top based on all elements. Since the separator now has fixed item-height, the total calculation is simpler.
+
             const allElements = Array.from(menuItemsContainer.querySelector('.sub-tab-content.active-tab') || menuItemsContainer.querySelector('.main-menu')).filter(el => el.nodeType === 1);
             let totalActualHeight = 0;
             allElements.forEach(el => {
-                // Since the separator is now fixed to item-height, clientHeight will be used consistently.
                 totalActualHeight += el.clientHeight;
             });
-            
+
             const maxScrollTop = totalActualHeight - menuItemsContainer.clientHeight;
 
             if (maxScrollTop > 0) {
@@ -645,49 +629,39 @@
 
             if (index >= 0 && index < currentItems.length) {
                 currentItems[index].classList.add('selected');
-                
-                // --- MODIFIED: Update Value Range Display on Selection ---
+
                 const selectedAction = currentItems[index].dataset.action;
                 const valRangeEl = currentItems[index].querySelector('.value-range');
                 if (valRangeEl && valueRangeState.hasOwnProperty(selectedAction)) {
                     valRangeEl.textContent = `< - ${valueRangeState[selectedAction]} - >`;
                 }
-                // ---------------------------------------------------------
-                
-                // Calculate the position of the selector based on the index and *all* elements above it, including separators.
+
                 let selectorY = 0;
                 let container = menuItemsContainer.querySelector('.sub-tab-content.active-tab') || menuItemsContainer.querySelector('.main-menu');
                 if (!container) return;
 
                 const allElements = Array.from(container.children).filter(el => el.nodeType === 1);
-                
-                // Calculate cumulative height (selectorY) up to the selected item
+
                 for (const item of allElements) {
                     if (item === currentItems[index]) break;
                     selectorY += item.clientHeight;
                 }
-                
-                // Get heights for centering calculation
+
                 const selectedItemHeight = currentItems[index].clientHeight;
-                // Safely get the selector height from CSS variable or fallback
-                const selectorHeight = parseFloat(getComputedStyle(selector).height) || selectedItemHeight + 1; 
-                // Calculate the offset to center the selector vertically within the menu item (26px item vs 27px selector -> -0.5px offset)
+                const selectorHeight = parseFloat(getComputedStyle(selector).height) || selectedItemHeight + 1;
                 const centeringOffset = (selectedItemHeight - selectorHeight) / 2;
 
                 selector.style.transform = `translateY(${selectorY + centeringOffset}px)`;
                 document.querySelector('.menu-footer .right').textContent = `${index + 1}/${numItems}`;
 
-                // Calculate scroll to ensure selected item is visible
                 const itemTop = selectorY;
                 const itemBottom = selectorY + currentItems[index].clientHeight;
                 const containerScrollTop = menuItemsContainer.scrollTop;
                 const containerHeight = menuItemsContainer.clientHeight;
-                
+
                 if (itemTop < containerScrollTop) {
-                    // Scroll up
                     menuItemsContainer.scrollTop = itemTop;
                 } else if (itemBottom > containerScrollTop + containerHeight) {
-                    // Scroll down
                     menuItemsContainer.scrollTop = itemBottom - containerHeight;
                 }
             } else {
@@ -715,12 +689,10 @@
             const currentlySelected = document.querySelector('.menu-item.selected');
             if (currentlySelected) currentlySelected.classList.remove('selected');
 
-            // Select only items with the .menu-item class to exclude the new separator
             currentItems = Array.from(document.querySelectorAll(`#${tabKey}Submenu .menu-item`));
             numItems = currentItems.length;
             if (currentItems.length > 0) currentItems[0].classList.add('selected');
-            
-            // --- ADDED: Initialize appearance value displays when switching to tab ---
+
             if (tabKey === 'appearance') {
                 currentItems.forEach(item => {
                     const action = item.dataset.action;
@@ -730,7 +702,6 @@
                     }
                 });
             }
-            // -------------------------------------------------------------------------
 
             document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
             document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
@@ -801,10 +772,7 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            
-            // --- INPUT BOX ACTIVE KEY HANDLERS (PRIORITY) ---
             if (isInputActive) {
-                // If input is active, only process 'Enter', 'Escape'
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const modelName = modelChangerInput.value.trim();
@@ -819,7 +787,6 @@
                         sendToLua(message);
                         showNotification('Model Changer', `Model set to: ${modelName}`);
                     } else {
-                        // User pressed enter without typing.
                         showNotification('Model Changer', 'Input cancelled (empty)');
                     }
                     hideModelChangerInput();
@@ -828,11 +795,9 @@
                     showNotification('Model Changer', 'Input cancelled');
                     hideModelChangerInput();
                 }
-                return; // Stop processing menu keys if input is active
+                return;
             }
-            // --- END INPUT BOX ACTIVE KEY HANDLERS ---
-            
-            // --- REGULAR MENU KEY HANDLERS ---
+
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (holdInterval) return;
@@ -850,7 +815,6 @@
                 const selectedItem = document.querySelector('.menu-item.selected');
                 const action = selectedItem ? selectedItem.dataset.action : null;
 
-                // --- Value Range Navigation and Update ---
                 if (action && valueRangeState.hasOwnProperty(action)) {
                     let currentValue = valueRangeState[action];
                     let direction = 0;
@@ -865,16 +829,10 @@
 
                     if (direction !== 0) {
                         currentValue += direction;
-                        // Enforce minimum value of 1
-                        if (currentValue < 1) currentValue = 1; 
-                        // You can enforce a max value here, e.g. if (currentValue > 500) currentValue = 1;
+                        if (currentValue < 1) currentValue = 1;
 
                         valueRangeState[action] = currentValue;
-                        
-                        // Update the displayed value immediately
                         selectedItem.querySelector('.value-range').textContent = `< - ${currentValue} - >`;
-                        
-                        // Send an intermediate update to Lua (optional)
                         sendToLua({
                             type: 'value_change',
                             menu: currentMenu,
@@ -882,10 +840,9 @@
                             value: currentValue,
                             itemText: selectedItem.querySelector('span').textContent
                         });
-                        return; 
+                        return;
                     }
                 }
-                // ----------------------------------------------------
             }
             
             if (e.key === 'Enter') {
@@ -895,12 +852,10 @@
                 if (!selectedItem) return;
                 const action = selectedItem.dataset.action;
 
-                // --- INTERCEPT: Model Changer menu activation logic ---
                 if (action === 'model-changer') {
-                    showModelChangerInput(); // Launch the input box
-                    return; // Crucial: Stops the 'Enter' key from proceeding to executeAction
+                    showModelChangerInput();
+                    return;
                 }
-                // --- END INTERCEPT ---
 
                 if (currentMenu === 'main') {
                     sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
@@ -914,7 +869,6 @@
                     if (selectedItem.querySelector('.checkbox')) {
                         toggleCheckbox(selectedItem);
                     } else if (valueRangeState.hasOwnProperty(action)) {
-                        // --- Execute value-range action with current value ---
                         const currentValue = valueRangeState[action];
                         const message = { 
                             type: 'action', 
@@ -925,9 +879,7 @@
                         };
                         sendToLua(message);
                         showNotification(action, `Set to ${currentValue}`);
-                        // ---------------------------------------------------------------
-                    }
-                    else {
+                    } else {
                         executeAction(action);
                     }
                 } else {
@@ -957,25 +909,21 @@
 
         let scrollTimeout = null;
         menuItemsContainer.addEventListener('wheel', (ev) => {
-            // Prevent scrolling if the input box is open
-            if (isInputActive) return; 
-            
+            if (isInputActive) return;
             ev.preventDefault();
             menuItemsContainer.scrollTop += ev.deltaY;
-            
+
             if (scrollTimeout) clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 updateScrollIndicator();
                 const scrollTop = menuItemsContainer.scrollTop;
-                
-                // Get all scrollable elements in the current active menu
+
                 const allElements = Array.from(menuItemsContainer.querySelector('.sub-tab-content.active-tab') || menuItemsContainer.querySelector('.main-menu')).filter(el => el.nodeType === 1);
-                
+
                 let cumulativeHeight = 0;
                 let closestElement = null;
                 let minDiff = Infinity;
-                
-                // Find the element closest to the scroll view's top edge
+
                 for (const item of allElements) {
                     const center = cumulativeHeight + (item.clientHeight / 2);
                     const diff = Math.abs(scrollTop - center);
@@ -987,21 +935,17 @@
                 }
 
                 if (closestElement && closestElement.classList.contains('menu-item')) {
-                    // If the closest element is a selectable menu item, select it
                     const finalIndex = currentItems.findIndex(item => item === closestElement);
 
                     if (finalIndex >= 0 && finalIndex < currentItems.length) {
                         const selectedItem = document.querySelector('.menu-item.selected');
                         if (selectedItem) selectedItem.classList.remove('selected');
-                        
-                        currentItems[finalIndex].classList.add('selected');
 
-                        // Recalculate selector position (already handled in updateSelection)
+                        currentItems[finalIndex].classList.add('selected');
                         updateSelection(finalIndex);
                         sendSelectionToLua(finalIndex);
                     }
                 } else if (closestElement && closestElement.classList.contains('menu-separator')) {
-                    // If the closest element is a separator, find the menu item *before* it
                     const elementIndex = allElements.indexOf(closestElement);
                     let finalIndex = -1;
                     for (let i = elementIndex - 1; i >= 0; i--) {
@@ -1011,7 +955,6 @@
                         }
                     }
                     if (finalIndex !== -1) {
-                         // Select the item right before the separator
                         updateSelection(finalIndex);
                         sendSelectionToLua(finalIndex);
                     }
@@ -1059,7 +1002,6 @@
 
                 let containerEl = !isSub ? document.querySelector('.main-menu') : document.getElementById(menuName + 'Submenu');
                 if (!containerEl) containerEl = document.querySelector('.main-menu');
-                // Only select actual menu-items for updates
                 const domItems = Array.from(containerEl.querySelectorAll('.menu-item'));
 
                 domItems.forEach((dom, i) => {
@@ -1077,13 +1019,11 @@
                     if (valRange) {
                         const action = dom.dataset.action;
                         if (src.type === 'value-range' && src.value) {
-                            valRange.textContent = src.value;
-                            // Optionally update JS state from Lua update
+                            valRange.textContent = `< - ${src.value} - >`;
                             if (!isNaN(parseInt(src.value))) {
                                 valueRangeState[action] = parseInt(src.value);
                             }
                         } else {
-                            // Default value range text to the current state value
                             if (valueRangeState.hasOwnProperty(action)) {
                                 valRange.textContent = `< - ${valueRangeState[action]} - >`;
                             } else {
@@ -1092,8 +1032,7 @@
                         }
                     }
                 });
-                
-                // Update currentItems to only contain selectable items
+
                 currentItems = domItems;
                 numItems = currentItems.length;
                 updateSelection(index);
@@ -1127,15 +1066,13 @@
                     setTimeout(() => notification.remove(), NOTI_TRANSITION);
                 }, NOTI_DURATION);
             } else if (payload.type === 'open_model_input') {
-                showModelChangerInput();  // Show the input overlay when message received from Lua
+                showModelChangerInput();
             }
         });
 
-        // Initialize currentItems based on the active tab, defaulting to main
         currentItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
         numItems = currentItems.length;
 
-        // Re-initialize allSubmenuItems with the correct list of *selectable* items
         allSubmenuItems['appearance'] = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
         allSubmenuItems['player'] = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
 
@@ -1144,7 +1081,6 @@
         sendSelectionToLua(0);
         updateScrollIndicator();
     });
-</script>
-
+    </script>
 </body>
 </html>
