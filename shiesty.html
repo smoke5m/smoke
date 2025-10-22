@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>shiesty Menu Final Visuals - Selective Notifications</title>
+    <title>SMOKE Menu Final Visuals - Selective Notifications</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -287,7 +287,7 @@
     <div class="menu-container">
         <div class="menu-main-block">
             <div class="menu-header-wrapper">
-                <div class="menu-header">shiesty</div>
+                <div class="menu-header">SMOKE</div>
             </div>
 
             <div class="menu-bar" id="menuBar">
@@ -402,8 +402,6 @@
         const data = event.data;
         if (!data || !data.type) return;
 
-        // Remove or comment out this block for simulated events, as we're handling manually
-        /*
         if (data.type === 'keydown' || data.type === 'keyup') {
             const e = new KeyboardEvent(data.type, {
                 key: data.key || '',
@@ -412,14 +410,6 @@
             });
             document.dispatchEvent(e);
             return;
-        }
-        */
-
-        // Add handling for manual input building
-        if (data.type === 'keychar' && isInputActive) {
-            modelChangerInput.value += data.char;
-        } else if (data.type === 'backspace' && isInputActive) {
-            modelChangerInput.value = modelChangerInput.value.slice(0, -1);
         }
 
         if (data.type === 'menu_update' || data.type === 'menu_notify' || data.type === 'open_model_input') {
