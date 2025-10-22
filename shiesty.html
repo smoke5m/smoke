@@ -1,1 +1,1094 @@
-CHANGE
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>smokey Menu Final Visuals - Selective Notifications</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* --- Root Variables --- */
+        :root {
+            --color-menu-bg: #00000079;
+            --color-highlight-pink: #e100ff;
+            --color-highlight-purple: #800080;
+            --color-black-section: #0A0A0A;
+            --color-text-bright: #FFFFFF;
+            --item-height: 26px;
+            --selector-height: 27px;
+            --menu-width: 320px;
+            --checkbox-off-color: #ffffff;
+            --checkbox-on-color: #f500f0;
+            --checkbox-bg: #181818;
+            --checkbox-on-bg: #181818;
+            --scrollbar-width: 8px;
+            --arrow-height: 8px;
+            --menu-padding-y: 2px;
+            --scrollbar-margin: 5px;
+            --visible-content-height: calc(var(--item-height) * 10 + (var(--menu-padding-y) * 2));
+            --noti-path-color: #0af;
+            --path-thickness: 2px;
+            --cycle-duration: 2s;
+            --noti-width: 250px;
+            --noti-height: 60px;
+            --noti-icon-size: 25px;
+            --noti-padding: 10px;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            background: transparent;
+            font-family: 'Roboto', sans-serif;
+            flex-direction: column;
+            padding-left: 20px;
+        }
+
+        .menu-container {
+            position: fixed;
+            top: 50%;
+            left: 100px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .menu-main-block { width: var(--menu-width); border-radius: 4px; overflow: hidden; }
+
+        .menu-header-wrapper { position: relative; height: 100px; background: var(--color-highlight-purple); border-top-left-radius: 4px; border-top-right-radius: 4px; }
+        .menu-header { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:500; font-size:38px; color:white; text-shadow:0 1px 1px rgba(0,0,0,0.9); }
+
+        .menu-bar { background: var(--color-black-section); height: 30px; display:flex; align-items:center; font-weight:400; font-size:13px; color:var(--color-text-bright); }
+        .submenu-active .menu-bar { background:#000; }
+
+        .menu-bar-tab { background: var(--color-black-section); color: #AAAAAA; padding: 6px 15px; white-space:nowrap; height:100%; display:flex; justify-content:center; align-items:center; box-shadow:1px 0 5px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); border-bottom:none; border-left:none; cursor:pointer; transition: all .2s ease; }
+
+        .menu-bar-tab.main-active { flex:0 1 auto; background: linear-gradient(180deg,#000 0%, var(--color-highlight-pink) 100%); border-top-left-radius:0px; border-top-right-radius:4px; color:var(--color-text-bright); border:none; z-index:10; margin-left:-1px; padding:0 15px; height:100%; margin-right:-10px; }
+
+        .menu-bar-sub-tab { flex:1; background:#0d0d0d; color:var(--color-text-bright); height:100%; padding:0 15px; display:flex; align-items:center; justify-content:center; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.1); border-top:none; border-bottom:none; border-radius:6px; transition:all .25s ease-in-out; position:relative; z-index:1; }
+        .menu-bar-sub-tab.active { background: linear-gradient(180deg,#000 0%, var(--color-highlight-pink) 100%); color:var(--color-text-bright); z-index:2; }
+
+        .menu-items-wrapper { position: relative; width: var(--menu-width); }
+
+        .menu-items {
+            width:100%;
+            background:var(--color-menu-bg);
+            position:relative;
+            border-radius:6px;
+            padding: var(--menu-padding-y) 0;
+            margin-top:5px;
+            max-height: var(--visible-content-height);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            scrollbar-width:none;
+        }
+        .menu-items::-webkit-scrollbar{ display:none; }
+
+        .menu-item {
+            height: var(--item-height);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 15px;
+            font-size:13px;
+            font-weight:400;
+            cursor: default;
+            position:relative;
+            color: var(--color-text-bright);
+            transition: box-shadow .1s ease, background .08s ease;
+        }
+        .menu-item i { font-size:0.7em; }
+
+        /* selector shouldn't steal pointer events */
+        .selector {
+            position:absolute;
+            left:0;
+            width:100%;
+            height:var(--selector-height);
+            transition: transform .25s ease;
+            background: rgba(168,0,154,0.56);
+            border-radius:4px;
+            z-index: 1;
+            box-shadow: 0 0 4px 2px rgba(255,0,234,0.82);
+            pointer-events: none;
+        }
+
+        .menu-item span, .menu-item i { position: relative; z-index: 2; pointer-events: auto; }
+
+        /* subtle hover so it feels responsive */
+        .menu-item:hover { background: rgba(255,255,255,0.02); }
+
+        .scroll-indicator-wrapper { position:absolute; top:130px; left: calc(-55% + (var(--menu-width)/2) + var(--scrollbar-margin) - 5px); width:var(--scrollbar-width); z-index:3; background:#000000; border-radius:3px; padding-top:var(--arrow-height); padding-bottom:var(--arrow-height); display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
+        .scroll-indicator-arrow { position:absolute; width:110%; height:var(--arrow-height); background:#000000; display:flex; justify-content:center; align-items:center; color:white; font-size:8px; }
+        .scroll-indicator-arrow.top { top:0; border-top-left-radius:3px; border-top-right-radius:3px; }
+        .scroll-indicator-arrow.bottom { bottom:0; border-bottom-left-radius:3px; border-bottom-right-radius:3px; }
+        .scroll-indicator-bar { position:relative; height:100%; width:110%; background:#000000; border-radius:0; }
+        .scroll-thumb { position:absolute; top:0; left:0; width:90%; background:#e100ff; border-radius:2px; transition: transform .25s ease, height .25s ease; box-shadow:0 0 8px #e100ff; }
+
+        .checkbox { width:30px; height:14px; background:var(--checkbox-bg); border-radius:20px; position:relative; flex-shrink:0; transition: background .08s linear; pointer-events:none; }
+        .checkbox::after { content:""; position:absolute; top:1px; left:1px; width:12px; height:12px; border-radius:50%; background:var(--checkbox-off-color); transition: transform .08s linear, background .08s linear; }
+        .checkbox.on{ background:var(--checkbox-on-bg); }
+        .checkbox.on::after{ transform:translateX(16px); background:var(--checkbox-on-color); }
+
+        .menu-footer { width:calc(var(--menu-width) - 30px); background:var(--color-black-section); color:white; font-size:12px; display:flex; justify-content:space-between; align-items:center; padding:4px 15px; border-radius:5px; margin-top:5px; margin-left:auto; margin-right:auto; }
+        .footer-details { display:flex; align-items:center; }
+        .footer-icon-wrapper { display:flex; align-items:center; padding-right:10px; margin-right:8px; border-right:1px solid rgba(255,255,255,0.35); }
+        .footer-icon { font-size:16px; color:white; }
+        .footer-info { color:#C0C0C0; white-space:nowrap; }
+        .menu-footer .right { font-weight:500; white-space:nowrap; }
+
+        .main-menu { display:block; }
+        .submenu > div { display:none; }
+        .submenu-active .main-menu { display:none; }
+        .submenu-active .sub-tab-content.active-tab { display:block; }
+        .submenu-active .menu-bar-tab.main-active { display:none !important; }
+        .submenu-active .menu-bar-sub-tab { display:flex; }
+
+        .notification-box { position:fixed; bottom:20px; right:20px; opacity:0; transform:translateX(100%); transition: opacity .3s ease-out, transform .3s ease-out; width:var(--noti-width); height:var(--noti-height); background:#000; border-radius:5px; color:#fff; padding:var(--noti-padding); box-sizing:border-box; overflow:hidden; border:1px solid #111; z-index:1000; }
+        .notification-box.show { opacity:1; transform:translateX(0); }
+        .notification-box.hide { opacity:0; transform:translateX(100%); }
+        .content { display:flex; align-items:center; gap:10px; z-index:2; position:relative; height:100%; }
+        .icon-group { position:relative; font-size:var(--noti-icon-size); line-height:1; color:var(--noti-path-color); text-shadow:0 0 5px var(--noti-path-color); margin-right:5px; }
+        .title { font-size:1em; font-weight:500; line-height:1.2; }
+        .message { font-size:.8em; color:#bbb; }
+
+        .notification-box::before, .notification-box::after { content:''; position:absolute; background:var(--noti-path-color); box-shadow:0 0 5px var(--noti-path-color); }
+        .notification-box::before { bottom:0; left:0; height:var(--path-thickness); width:100%; transform-origin:left center; }
+        .notification-box::after { bottom:0; left:0; width:var(--path-thickness); height:100%; transform-origin:bottom center; }
+        .notification-box.show::before { animation:move-h var(--cycle-duration) linear forwards; }
+        .notification-box.show::after { animation:move-v var(--cycle-duration) linear forwards; }
+
+        @keyframes move-h { 0%{ transform:scaleX(1);} 100%{ transform:scaleX(0);} }
+        @keyframes move-v { 0%{ transform:scaleY(1);} 100%{ transform:scaleY(0);} }
+
+        .menu-item.selected { /* visual handled by .selector */ }
+
+        /* --- New Separator Styles --- */
+        .menu-separator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--color-text-bright);
+            pointer-events: none;
+            height: var(--item-height); 
+            margin: 0; 
+        }
+
+        .separator-line {
+            border: none;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 0 10px;
+            flex-grow: 1;
+            width: 30px;
+            max-width: 80px;
+        }
+
+        .separator-text {
+            white-space: nowrap;
+            opacity: 0.9;
+        }
+
+        /* --- New Value Range Style --- */
+        .value-range {
+            font-size: 13px;
+            color: var(--color-text-bright);
+            white-space: nowrap;
+            user-select: none; 
+        }
+        
+        .menu-item.selected .value-range {
+            opacity: 1;
+        }
+        
+        /* --- NEW INPUT BOX STYLES --- */
+        #inputOverlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: none; 
+            justify-content: center;
+            align-items: flex-end; 
+            pointer-events: none; 
+            z-index: 999;
+        }
+
+        #inputOverlay.active {
+            display: flex; 
+            pointer-events: auto; 
+        }
+        
+        .ui-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 100px; 
+        }
+
+        .vehicle-input-wrapper {
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.925);
+            padding: 3px 10px 0; 
+        }
+
+        .vehicle-input-header {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            padding-bottom: 0px; 
+        }
+
+        .vehicle-icon {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border: 1px solid #ffffff; 
+            margin-right: 8px;
+            transform: rotate(45deg); 
+        }
+
+        .purple-separator {
+            border: none;
+            height: 2px;
+            background-color: #9900ff;
+            width: 100%;
+            margin: 0 0 3px 0;
+        }
+
+        .vehicle-name-input {
+            width: 100%;
+            padding: 5px 10px; 
+            font-size: 14px;
+            border-radius: 4px;
+            color: #ffffff;
+            background-color: #1a1a1a;
+            box-sizing: border-box; 
+            margin-bottom: 5px;
+            border: none;
+        }
+        
+        .vehicle-name-input:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(255, 0, 234, 0.82);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-container">
+        <div class="menu-main-block">
+            <div class="menu-header-wrapper">
+                <div class="menu-header">smokey</div>
+            </div>
+
+            <div class="menu-bar" id="menuBar">
+                <span class="menu-bar-tab main-active" id="mainMenuTab">Main menu</span>
+                <span class="menu-bar-tab menu-bar-sub-tab" id="playerSubTab" data-tab-key="player">Player</span>
+                <span class="menu-bar-tab menu-bar-sub-tab" id="appearanceSubTab" data-tab-key="appearance">Appearance</span>
+            </div>
+        </div>
+
+        <div class="scroll-indicator-wrapper" id="scrollIndicatorWrapper">
+            <div class="scroll-indicator-arrow top"><i class="fas fa-chevron-up"></i></div>
+            <div class="scroll-indicator-bar">
+                <div class="scroll-thumb" id="scrollThumb"></div>
+            </div>
+            <div class="scroll-indicator-arrow bottom"><i class="fas fa-chevron-down"></i></div>
+        </div>
+
+        <div class="menu-items-wrapper">
+            <div class="menu-items" id="menuItems">
+                <div class="selector" id="selector"></div>
+
+                <div class="main-menu">
+                    <div class="menu-item" data-action="player"><span>Player</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="server"><span>Server</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="weapon"><span>Weapon</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="combat"><span>Combat</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="vehicle"><span>Vehicle</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="visual"><span>Visual</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="miscellaneous"><span>Miscellaneous</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="settings"><span>Settings</span><i class="fas fa-chevron-right"></i></div>
+                    <div class="menu-item" data-action="search"><span>Search</span><i class="fas fa-search"></i></div>
+                </div>
+
+                <div class="submenu">
+                    <div id="playerSubmenu" class="sub-tab-content">
+                        <div class="menu-item" data-action="revive"><span>Revive</span><span></span></div>
+                        <div class="menu-item" data-action="health"><span>Health</span><span></span></div>
+                        <div class="menu-item" data-action="armor"><span>Armor</span><span></span></div>
+                        <div class="menu-item" data-action="godmode"><span class="checkbox-text">Godmode</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="noclip"><span class="checkbox-text">Noclip [U]</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="freecam"><span class="checkbox-text">Freecam [H]</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="invisible"><span class="checkbox-text">Invisible</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="no_ragdoll"><span class="checkbox-text">No Ragdoll</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="infinite_stamina"><span class="checkbox-text">Infinite Stamina</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="super_jump"><span class="checkbox-text">Super Jump</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="super_punch"><span class="checkbox-text">Super Punch</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="throw_from_vehicle"><span class="checkbox-text">Throw From Vehicle</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="name_tags"><span class="checkbox-text">Name Tags</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="crosshair"><span class="checkbox-text">Crosshair</span><span class="checkbox"></span></div>
+                        <div class="menu-item" data-action="fast_run"><span class="checkbox-text">Fast Run</span><span class="checkbox"></span></div>
+                    </div>
+
+                    <div id="appearanceSubmenu" class="sub-tab-content">
+                        <div class="menu-item" data-action="randomize-outfit"><span>Randomize Outfit</span><span></span></div>
+                        <div class="menu-item" data-action="skin-menu"><span>Skin Menu</span></div>
+                        
+                        <div class="menu-separator">
+                            <hr class="separator-line left-line">
+                            <span class="separator-text">Clothing</span>
+                            <hr class="separator-line right-line">
+                        </div>
+
+                        <div class="menu-item" data-action="change-hat"><span>Hat</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-mask"><span>Mask</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-glasses"><span>Glasses</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-torso"><span>Torso</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-tshirt"><span>Tshirt</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-pants"><span>Pants</span><div class="value-range">< - 1 - ></div></div>
+                        <div class="menu-item" data-action="change-shoes"><span>Shoes</span><div class="value-range">< - 1 - ></div></div>
+                    
+                        <div class="menu-separator">
+                            <hr class="separator-line left-line">
+                            <span class="separator-text">Model</span>
+                            <hr class="separator-line right-line">
+                        </div>    
+                        
+                        <div class="menu-item" data-action="model-changer"><span>Model Changer</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-footer">
+            <div class="footer-details">
+                <div class="footer-icon-wrapper">
+                    <i class="fas fa-running footer-icon"></i>
+                </div>
+                <span class="footer-info">271078 | 9d ago</span>
+            </div>
+            <div class="right">1/9</div>
+        </div>
+    </div>
+    
+    <div id="inputOverlay">
+        <div class="ui-container">
+            <div class="vehicle-input-wrapper">
+                <div class="vehicle-input-header">
+                    <i class="vehicle-icon" aria-hidden="true"></i> 
+                    Model Changer
+                </div>
+                
+                <hr class="purple-separator">
+                
+                <input type="text" id="modelChangerInput" class="vehicle-name-input" placeholder="">
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Global message handler (handles both key events from Lua and 'menu_update'/'menu_notify' from Lua)
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || !data.type) return;
+
+        if (data.type === 'keydown' || data.type === 'keyup') {
+            const e = new KeyboardEvent(data.type, {
+                key: data.key || '',
+                keyCode: data.keyCode || 0,
+                bubbles: true
+            });
+            document.dispatchEvent(e);
+            return;
+        }
+
+        if (data.type === 'menu_update' || data.type === 'menu_notify' || data.type === 'open_model_input') {
+            let payload = data;
+            try {
+                if (typeof data === 'string') payload = JSON.parse(data);
+                if (payload && payload.data && typeof payload.data === 'string') {
+                    const inner = JSON.parse(payload.data);
+                    if (inner) payload = inner;
+                }
+            } catch (e) {
+                // Ignore parse errors and use original
+            }
+            window.dispatchEvent(new CustomEvent('menu:message', { detail: payload }));
+            return;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuContainer = document.querySelector('.menu-container');
+        const menuItemsContainer = document.getElementById('menuItems');
+        const selector = document.getElementById('selector');
+        const scrollIndicatorWrapper = document.getElementById('scrollIndicatorWrapper');
+        const scrollThumb = document.getElementById('scrollThumb');
+        const mainMenuTab = document.getElementById('mainMenuTab');
+        const subTabs = document.querySelectorAll('.menu-bar-sub-tab');
+        let subTabIndex = 0;
+
+        // --- Input box elements and state ---
+        let isInputActive = false;
+        const modelChangerInput = document.getElementById('modelChangerInput');
+        const inputOverlay = document.getElementById('inputOverlay');
+
+        function showModelChangerInput() {
+            isInputActive = true;
+            inputOverlay.classList.add('active');
+            modelChangerInput.focus();
+            menuContainer.style.opacity = '0.4';
+            // Ensure input is focusable
+            setTimeout(() => modelChangerInput.focus(), 100);
+        }
+
+        function hideModelChangerInput(clear = true) {
+            isInputActive = false;
+            inputOverlay.classList.remove('active');
+            if (clear) modelChangerInput.value = '';
+            menuContainer.style.opacity = '1';
+        }
+
+        let isSubmenuActive = false;
+        let currentMenu = 'main';
+        let holdInterval = null;
+        let isHolding = false;
+        let lastScrollTime = 0;
+
+        // --- State to track current numerical values for clothing items ---
+        const valueRangeState = {
+            'change-hat': 1,
+            'change-mask': 1,
+            'change-glasses': 1,
+            'change-torso': 1,
+            'change-tshirt': 1,
+            'change-pants': 1,
+            'change-shoes': 1,
+        };
+
+        const itemHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--item-height')) || 26;
+        const arrowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-height')) || 8;
+        const MAX_VISIBLE_ITEMS = 10;
+        const NOTI_DURATION = 2000;
+        const NOTI_TRANSITION = 300;
+
+        const mainMenuItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
+        const playerSubmenuItems = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
+        const appearanceSubmenuItems = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
+        const allSubmenuItems = { 'player': playerSubmenuItems, 'appearance': appearanceSubmenuItems };
+        let currentItems = mainMenuItems;
+        currentItems[0].classList.add('selected');
+        let numItems = currentItems.length;
+
+        function sendToLua(message) {
+            const payload = (typeof message === 'string') ? message : JSON.stringify(message);
+            console.log('LUA_MESSAGE_OUT:', payload);
+
+            try {
+                fetch('https://menu:action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload
+                }).then(() => {
+                    console.log('Sent via fetch to https://menu:action');
+                }).catch((err) => {
+                    console.warn('fetch https://menu:action failed:', err);
+                });
+            } catch (err) {
+                console.warn('fetch to https://menu:action threw:', err);
+            }
+
+            try {
+                window.postMessage({ type: 'menu:action', data: payload }, '*');
+                console.log('Sent via window.postMessage');
+            } catch (err) {
+                console.warn('window.postMessage failed', err);
+            }
+
+            try {
+                if (window.parent) {
+                    window.parent.postMessage({ type: 'menu:action', data: payload }, '*');
+                    console.log('Sent via parent.postMessage');
+                }
+            } catch (err) {
+                console.warn('parent.postMessage failed', err);
+            }
+
+            try {
+                if (typeof window.TriggerLuaEvent === 'function') {
+                    try { window.TriggerLuaEvent('menu:action', payload); console.log('Called TriggerLuaEvent'); } catch(e){/*ignore*/ }
+                }
+                if (typeof window.TriggerEvent === 'function') {
+                    try { window.TriggerEvent('menu:action', payload); console.log('Called TriggerEvent'); } catch(e){/*ignore*/ }
+                }
+            } catch (err) {
+                console.warn('Direct function invocation failed', err);
+            }
+        }
+
+        function sendSelectionToLua(index) {
+            const selectedItem = currentItems[index];
+            if (selectedItem) {
+                const message = {
+                    type: 'selection_update',
+                    menu: currentMenu,
+                    index: index,
+                    action: selectedItem.dataset.action,
+                    itemText: selectedItem.querySelector('span').textContent
+                };
+                sendToLua(message);
+            }
+        }
+
+        function updateMenuBar() {
+            if (currentMenu === 'main') {
+                mainMenuTab.classList.add('main-active');
+                mainMenuTab.style.display = 'flex';
+                subTabs.forEach(tab => tab.style.display = 'none');
+                menuItemsContainer.classList.remove('submenu-active');
+            } else if (isSubmenuActive) {
+                mainMenuTab.classList.remove('main-active');
+                mainMenuTab.style.display = 'none';
+                subTabs.forEach(tab => { tab.style.display = 'flex'; tab.classList.remove('active'); });
+                if (subTabs[subTabIndex]) subTabs[subTabIndex].classList.add('active');
+                menuItemsContainer.classList.add('submenu-active');
+            }
+        }
+
+        function updateScrollIndicator() {
+            const menuHeight = menuItemsContainer.clientHeight;
+            scrollIndicatorWrapper.style.height = `${menuHeight + (arrowHeight * 2)}px`;
+            const thumbTrackHeight = scrollIndicatorWrapper.querySelector('.scroll-indicator-bar').clientHeight;
+            const visibleHeight = itemHeight * MAX_VISIBLE_ITEMS;
+            const totalContentHeight = numItems * itemHeight;
+
+            let thumbHeight = (numItems <= MAX_VISIBLE_ITEMS)
+                ? thumbTrackHeight
+                : Math.max(20, (visibleHeight / totalContentHeight) * thumbTrackHeight);
+            scrollThumb.style.height = `${thumbHeight}px`;
+
+            const maxThumbTravel = thumbTrackHeight - thumbHeight;
+            let scrollPercentage = 0;
+
+            const allElements = Array.from(menuItemsContainer.querySelector('.sub-tab-content.active-tab') || menuItemsContainer.querySelector('.main-menu')).filter(el => el.nodeType === 1);
+            let totalActualHeight = 0;
+            allElements.forEach(el => {
+                totalActualHeight += el.clientHeight;
+            });
+
+            const maxScrollTop = totalActualHeight - menuItemsContainer.clientHeight;
+
+            if (maxScrollTop > 0) {
+                scrollPercentage = menuItemsContainer.scrollTop / maxScrollTop;
+            }
+
+            const thumbPosition = scrollPercentage * maxThumbTravel;
+            scrollThumb.style.transform = `translateY(${thumbPosition}px)`;
+        }
+
+        function showNotification(action, title = 'Action Confirmed') {
+            const existingNotification = document.querySelector('.notification-box');
+            if (existingNotification) existingNotification.remove();
+
+            const notification = document.createElement('div');
+            notification.className = 'notification-box';
+            let actionMessage = action ? (action.charAt(0).toUpperCase() + action.slice(1).replace(/-/g, ' ').replace(/_/g, ' ')) : '';
+            const htmlContent = `
+                <div class="content">
+                    <div class="icon-group"><i class="fa-solid fa-check-circle"></i></div>
+                    <div class="text-group">
+                        <div class="title">${title}</div>
+                        <div class="message">${actionMessage}</div>
+                    </div>
+                </div>
+            `;
+            notification.innerHTML = htmlContent;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.classList.add('show'), 10);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.classList.add('hide');
+                setTimeout(() => notification.remove(), NOTI_TRANSITION);
+            }, NOTI_DURATION);
+        }
+
+        function updateSelection(index) {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (selectedItem) selectedItem.classList.remove('selected');
+
+            if (index >= 0 && index < currentItems.length) {
+                currentItems[index].classList.add('selected');
+
+                const selectedAction = currentItems[index].dataset.action;
+                const valRangeEl = currentItems[index].querySelector('.value-range');
+                if (valRangeEl && valueRangeState.hasOwnProperty(selectedAction)) {
+                    valRangeEl.textContent = `< - ${valueRangeState[selectedAction]} - >`;
+                }
+
+                let selectorY = 0;
+                let container = menuItemsContainer.querySelector('.sub-tab-content.active-tab') || menuItemsContainer.querySelector('.main-menu');
+                if (!container) return;
+
+                const allElements = Array.from(container.children).filter(el => el.nodeType === 1);
+
+                for (const item of allElements) {
+                    if (item === currentItems[index]) break;
+                    selectorY += item.clientHeight;
+                }
+
+                const selectedItemHeight = currentItems[index].clientHeight;
+                const selectorHeight = parseFloat(getComputedStyle(selector).height) || selectedItemHeight + 1;
+                const centeringOffset = (selectedItemHeight - selectorHeight) / 2;
+
+                selector.style.transform = `translateY(${selectorY + centeringOffset}px)`;
+                document.querySelector('.menu-footer .right').textContent = `${index + 1}/${numItems}`;
+
+                const itemTop = selectorY;
+                const itemBottom = selectorY + currentItems[index].clientHeight;
+                const containerScrollTop = menuItemsContainer.scrollTop;
+                const containerHeight = menuItemsContainer.clientHeight;
+
+                if (itemTop < containerScrollTop) {
+                    menuItemsContainer.scrollTop = itemTop;
+                } else if (itemBottom > containerScrollTop + containerHeight) {
+                    menuItemsContainer.scrollTop = itemBottom - containerHeight;
+                }
+            } else {
+                document.querySelector('.menu-footer .right').textContent = `0/${numItems}`;
+                selector.style.transform = `translateY(-${itemHeight}px)`;
+            }
+            updateScrollIndicator();
+        }
+
+        function moveSelection(direction) {
+            let index = Array.from(currentItems).indexOf(document.querySelector('.menu-item.selected'));
+            if (index === -1) index = 0;
+
+            index += direction;
+            if (index < 0) index = currentItems.length - 1;
+            if (index >= currentItems.length) index = 0;
+
+            updateSelection(index);
+            sendSelectionToLua(index);
+        }
+
+        function setActiveSubTab(tabKey) {
+            currentMenu = tabKey;
+            subTabIndex = Array.from(subTabs).findIndex(tab => tab.dataset.tabKey === tabKey);
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+
+            currentItems = Array.from(document.querySelectorAll(`#${tabKey}Submenu .menu-item`));
+            numItems = currentItems.length;
+            if (currentItems.length > 0) currentItems[0].classList.add('selected');
+
+            if (tabKey === 'appearance') {
+                currentItems.forEach(item => {
+                    const action = item.dataset.action;
+                    const valRangeEl = item.querySelector('.value-range');
+                    if (valRangeEl && valueRangeState.hasOwnProperty(action)) {
+                        valRangeEl.textContent = `< - ${valueRangeState[action]} - >`;
+                    }
+                });
+            }
+
+            document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
+            document.getElementById(`${tabKey}Submenu`).classList.add('active-tab');
+
+            menuItemsContainer.scrollTop = 0;
+            updateMenuBar();
+            updateSelection(0);
+            sendSelectionToLua(0);
+        }
+
+        function switchToSubmenu() {
+            const selectedItem = document.querySelector('.menu-item.selected');
+            if (!selectedItem || selectedItem.dataset.action !== 'player') return;
+            selectedItem.classList.remove('selected');
+            isSubmenuActive = true;
+            menuItemsContainer.classList.add('submenu-active');
+            setActiveSubTab('player');
+        }
+
+        function switchToMainMenu() {
+            const currentlySelected = document.querySelector('.menu-item.selected');
+            if (currentlySelected) currentlySelected.classList.remove('selected');
+
+            isSubmenuActive = false;
+            currentMenu = 'main';
+            menuItemsContainer.classList.remove('submenu-active');
+            document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active-tab'));
+            currentItems = mainMenuItems;
+            numItems = mainMenuItems.length;
+            currentItems[0].classList.add('selected');
+            menuItemsContainer.scrollTop = 0;
+            updateMenuBar();
+            updateSelection(0);
+            sendSelectionToLua(0);
+        }
+
+        function switchSubTab(direction) {
+            if (!isSubmenuActive) return;
+            let newIndex = subTabIndex + direction;
+            if (newIndex < 0) newIndex = subTabs.length - 1;
+            else if (newIndex >= subTabs.length) newIndex = 0;
+            setActiveSubTab(subTabs[newIndex].dataset.tabKey);
+        }
+
+        function toggleCheckbox(item) {
+            const checkbox = item.querySelector('.checkbox');
+            if (checkbox) {
+                checkbox.classList.toggle('on');
+                const state = checkbox.classList.contains('on');
+                const action = item.dataset.action;
+                showNotification(action, state ? 'Enabled' : 'Disabled');
+
+                const message = {
+                    type: 'action',
+                    menu: currentMenu,
+                    action: action,
+                    state: state,
+                    itemText: item.querySelector('span').textContent
+                };
+                sendToLua(message);
+            }
+        }
+
+        function executeAction(action) {
+            const message = { type: 'action', menu: currentMenu, action: action };
+            sendToLua(message);
+            showNotification(action);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (isInputActive) {
+                e.preventDefault();
+                if (e.key === 'Enter') {
+                    const modelName = modelChangerInput.value.trim();
+                    if (modelName) {
+                        const message = { 
+                            type: 'action', 
+                            menu: 'appearance', 
+                            action: 'set-model', 
+                            value: modelName,
+                            itemText: 'Model Changer'
+                        };
+                        sendToLua(message);
+                        showNotification('Model Changer', `Model set to: ${modelName}`);
+                    } else {
+                        showNotification('Model Changer', 'Input cancelled (empty)');
+                    }
+                    hideModelChangerInput();
+                } else if (e.key === 'Escape') {
+                    showNotification('Model Changer', 'Input cancelled');
+                    hideModelChangerInput();
+                } else if (e.key === 'Backspace') {
+                    modelChangerInput.value = modelChangerInput.value.slice(0, -1);
+                } else if (e.key === 'Delete') {
+                    modelChangerInput.value = modelChangerInput.value.slice(0, -1); // Simple, no cursor position
+                } else if (e.key.length === 1) {
+                    // Allow everything except disallowed control characters
+                    if (/^[\x20-\x7E]$/.test(e.key)) {
+                        modelChangerInput.value += e.key;
+                    }
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (holdInterval) return;
+
+                isHolding = true;
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+                moveSelection(direction);
+
+                holdInterval = setInterval(() => {
+                    moveSelection(direction);
+                }, 200);
+            } 
+            
+            if (isSubmenuActive) {
+                const selectedItem = document.querySelector('.menu-item.selected');
+                const action = selectedItem ? selectedItem.dataset.action : null;
+
+                if (action && valueRangeState.hasOwnProperty(action)) {
+                    let currentValue = valueRangeState[action];
+                    let direction = 0;
+
+                    if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                        e.preventDefault();
+                        direction = -1;
+                    } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                        e.preventDefault();
+                        direction = 1;
+                    }
+
+                    if (direction !== 0) {
+                        currentValue += direction;
+                        if (currentValue < 1) currentValue = 1;
+
+                        valueRangeState[action] = currentValue;
+                        selectedItem.querySelector('.value-range').textContent = `< - ${currentValue} - >`;
+                        sendToLua({
+                            type: 'value_change',
+                            menu: currentMenu,
+                            action: action,
+                            value: currentValue,
+                            itemText: selectedItem.querySelector('span').textContent
+                        });
+                        return;
+                    }
+                }
+            }
+            
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.repeat) return;
+                const selectedItem = document.querySelector('.menu-item.selected');
+                if (!selectedItem) return;
+                const action = selectedItem.dataset.action;
+
+                if (action === 'model-changer') {
+                    showModelChangerInput();
+                    return;
+                }
+
+                if (currentMenu === 'main') {
+                    sendToLua({ type: 'action', menu: currentMenu, action: action, itemText: selectedItem.querySelector('span').textContent });
+                    if (action === 'player') {
+                        switchToSubmenu();
+                        return;
+                    }
+                }
+
+                if (isSubmenuActive) {
+                    if (selectedItem.querySelector('.checkbox')) {
+                        toggleCheckbox(selectedItem);
+                    } else if (valueRangeState.hasOwnProperty(action)) {
+                        const currentValue = valueRangeState[action];
+                        const message = { 
+                            type: 'action', 
+                            menu: currentMenu, 
+                            action: action, 
+                            value: currentValue,
+                            itemText: selectedItem.querySelector('span').textContent
+                        };
+                        sendToLua(message);
+                        showNotification(action, `Set to ${currentValue}`);
+                    } else {
+                        executeAction(action);
+                    }
+                } else {
+                    executeAction(action);
+                }
+            } else if (e.key === 'Backspace' && isSubmenuActive) {
+                e.preventDefault();
+                switchToMainMenu();
+            } else if (isSubmenuActive && (e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'e')) {
+                e.preventDefault();
+                if (e.repeat) return;
+                const direction = e.key.toLowerCase() === 'e' ? 1 : -1;
+                switchSubTab(direction);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                clearInterval(holdInterval);
+                holdInterval = null;
+                isHolding = false;
+                const index = Array.from(currentItems).indexOf(document.querySelector('.menu-item.selected'));
+                updateSelection(index);
+                sendSelectionToLua(index);
+            }
+        });
+
+        let scrollTimeout = null;
+        menuItemsContainer.addEventListener('wheel', (ev) => {
+            if (isInputActive) return;
+            ev.preventDefault();
+            menuItemsContainer.scrollTop += ev.deltaY;
+
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                updateScrollIndicator();
+                const scrollTop = menuItemsContainer.scrollTop;
+
+                const allElements = Array.from(menuItemsContainer.querySelector('.sub-tab-content.active-tab') || menuItemsContainer.querySelector('.main-menu')).filter(el => el.nodeType === 1);
+
+                let cumulativeHeight = 0;
+                let closestElement = null;
+                let minDiff = Infinity;
+
+                for (const item of allElements) {
+                    const center = cumulativeHeight + (item.clientHeight / 2);
+                    const diff = Math.abs(scrollTop - center);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestElement = item;
+                    }
+                    cumulativeHeight += item.clientHeight;
+                }
+
+                if (closestElement && closestElement.classList.contains('menu-item')) {
+                    const finalIndex = currentItems.findIndex(item => item === closestElement);
+
+                    if (finalIndex >= 0 && finalIndex < currentItems.length) {
+                        const selectedItem = document.querySelector('.menu-item.selected');
+                        if (selectedItem) selectedItem.classList.remove('selected');
+
+                        currentItems[finalIndex].classList.add('selected');
+                        updateSelection(finalIndex);
+                        sendSelectionToLua(finalIndex);
+                    }
+                } else if (closestElement && closestElement.classList.contains('menu-separator')) {
+                    const elementIndex = allElements.indexOf(closestElement);
+                    let finalIndex = -1;
+                    for (let i = elementIndex - 1; i >= 0; i--) {
+                        if (allElements[i].classList.contains('menu-item')) {
+                            finalIndex = currentItems.findIndex(item => item === allElements[i]);
+                            break;
+                        }
+                    }
+                    if (finalIndex !== -1) {
+                        updateSelection(finalIndex);
+                        sendSelectionToLua(finalIndex);
+                    }
+                }
+            }, 100);
+        }, { passive: false });
+
+        window.addEventListener('menu:message', (ev) => {
+            const payload = ev.detail;
+            if (!payload || !payload.type) return;
+
+            if (payload.type === 'menu_update') {
+                const menuName = payload.menu || 'main';
+                const isSub = !!payload.isSubmenu;
+                const index = (payload.index != null) ? Number(payload.index) : 0;
+                const items = Array.isArray(payload.items) ? payload.items : [];
+                const footer = payload.footer || {};
+
+                if (isSub) {
+                    isSubmenuActive = true;
+                    menuItemsContainer.classList.add('submenu-active');
+                    document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active-tab'));
+                    const submenuEl = document.getElementById(menuName + 'Submenu');
+                    if (submenuEl) submenuEl.classList.add('active-tab');
+
+                    subTabs.forEach(tab => {
+                        const isActive = (tab.dataset.tabKey === menuName);
+                        tab.style.display = 'flex';
+                        tab.classList.toggle('active', isActive);
+                    });
+                    mainMenuTab.style.display = 'none';
+                    mainMenuTab.classList.remove('main-active');
+                } else {
+                    isSubmenuActive = false;
+                    menuItemsContainer.classList.remove('submenu-active');
+                    document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active-tab'));
+                    mainMenuTab.style.display = 'flex';
+                    mainMenuTab.classList.add('main-active');
+
+                    subTabs.forEach(tab => {
+                        tab.classList.remove('active');
+                        tab.style.display = 'none';
+                    });
+                }
+
+                let containerEl = !isSub ? document.querySelector('.main-menu') : document.getElementById(menuName + 'Submenu');
+                if (!containerEl) containerEl = document.querySelector('.main-menu');
+                const domItems = Array.from(containerEl.querySelectorAll('.menu-item'));
+
+                domItems.forEach((dom, i) => {
+                    dom.classList.remove('selected');
+                    const src = items[i];
+                    if (!src) return;
+                    const span = dom.querySelector('span');
+                    if (span && src.text) span.textContent = src.text;
+                    const cb = dom.querySelector('.checkbox');
+                    if (cb) {
+                        if (src.type === 'toggle' && src.state) cb.classList.add('on');
+                        else cb.classList.remove('on');
+                    }
+                    const valRange = dom.querySelector('.value-range');
+                    if (valRange) {
+                        const action = dom.dataset.action;
+                        if (src.type === 'value-range' && src.value) {
+                            valRange.textContent = `< - ${src.value} - >`;
+                            if (!isNaN(parseInt(src.value))) {
+                                valueRangeState[action] = parseInt(src.value);
+                            }
+                        } else {
+                            if (valueRangeState.hasOwnProperty(action)) {
+                                valRange.textContent = `< - ${valueRangeState[action]} - >`;
+                            } else {
+                                valRange.textContent = '< - 1 - >';
+                            }
+                        }
+                    }
+                });
+
+                currentItems = domItems;
+                numItems = currentItems.length;
+                updateSelection(index);
+
+                try {
+                    const footerRight = document.querySelector('.menu-footer .right');
+                    if (footerRight) footerRight.textContent = (footer.current || (index + 1)) + '/' + (footer.total || numItems);
+                } catch (e) {}
+            } else if (payload.type === 'menu_notify') {
+                const title = payload.title || 'Action Confirmed';
+                const message = payload.message || '';
+                const existingNotification = document.querySelector('.notification-box');
+                if (existingNotification) existingNotification.remove();
+
+                const notification = document.createElement('div');
+                notification.className = 'notification-box';
+                notification.innerHTML = `
+                    <div class="content">
+                        <div class="icon-group"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="text-group">
+                            <div class="title">${title}</div>
+                            <div class="message">${message}</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.classList.add('show'), 10);
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    notification.classList.add('hide');
+                    setTimeout(() => notification.remove(), NOTI_TRANSITION);
+                }, NOTI_DURATION);
+            } else if (payload.type === 'open_model_input') {
+                showModelChangerInput();
+            }
+        });
+
+        currentItems = Array.from(document.querySelectorAll('.main-menu .menu-item'));
+        numItems = currentItems.length;
+
+        allSubmenuItems['appearance'] = Array.from(document.querySelectorAll('#appearanceSubmenu .menu-item'));
+        allSubmenuItems['player'] = Array.from(document.querySelectorAll('#playerSubmenu .menu-item'));
+
+        updateMenuBar();
+        updateSelection(0);
+        sendSelectionToLua(0);
+        updateScrollIndicator();
+    });
+    </script>
+</body>
+</html>
